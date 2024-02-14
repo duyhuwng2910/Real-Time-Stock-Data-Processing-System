@@ -1,0 +1,6 @@
+pandas~=2.2.0
+pyspark~=3.5.0
+cassandra-driver~=3.29.0
+vnstock~=0.2.8.8
+mysql-connector-python~=8.3.0
+SQLAlchemy~=2.0.25
