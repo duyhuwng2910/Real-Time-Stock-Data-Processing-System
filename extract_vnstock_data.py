@@ -1,10 +1,11 @@
+import datetime
 import random
 import time
 
 import pandas as pd
 import vnstock
 import mysql.connector
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, types
 
 connection = mysql.connector.connect(user='root',
                                      password='root',
@@ -59,8 +60,47 @@ def extract_companies_list_default_data():
     '''
         Second way to insert
     '''
+    # Cấu hình kiểu dữ liệu cho các cột
+    sql_type = {
+        'ticker': types.VARCHAR(255),
+        'com_group_code': types.VARCHAR(255),
+        'organ_name': types.VARCHAR(255),
+        'organ_short_name': types.VARCHAR(255),
+        'organ_type_code': types.VARCHAR(255),
+        'com_type_code': types.VARCHAR(255),
+        'icb_name': types.VARCHAR(255),
+        'icb_name_path': types.VARCHAR(255),
+        'sector': types.VARCHAR(255),
+        'industry': types.VARCHAR(255),
+        'group_name': types.VARCHAR(255),
+        'sub_group': types.VARCHAR(255),
+        'icb_code': types.BIGINT,
+        'VN30': types.Boolean(),
+        'VNMID': types.Boolean(),
+        'VN100': types.Boolean(),
+        'VNSML': types.Boolean(),
+        'VNALL': types.Boolean(),
+        'HNX30': types.Boolean(),
+        'VNX50': types.Boolean(),
+        'VNXALL': types.Boolean(),
+        'VNDIAMOND': types.Boolean(),
+        'VNFINLEAD': types.Boolean(),
+        'VNFINSELECT': types.Boolean(),
+        'VNSI': types.Boolean(),
+        'VNCOND': types.Boolean(),
+        'VNCONS': types.Boolean(),
+        'VNENE': types.Boolean(),
+        'VNFIN': types.Boolean(),
+        'VNHEAL': types.Boolean(),
+        'VNIND': types.Boolean(),
+        'VNIT': types.Boolean(),
+        'VNMAT': types.Boolean(),
+        'VNREAL': types.Boolean(),
+        'VNUTI': types.Boolean()
+    }
+
     try:
-        # df.to_sql('companies_list_default', con=engine, if_exists='replace', index=False)
+        df.to_sql('companies_list_default', con=engine, if_exists='replace', index=False, dtype=sql_type)
 
         print("Insert default companies list data completely!")
 
@@ -150,20 +190,22 @@ def extract_companies_overview_data(df: pd.DataFrame):
     co_df.rename(columns={
         'exchangeName': 'exchange_name',
         'companyType': 'company_type',
-        'noShareHolders': 'no_share_holders',
+        'noShareholders': 'number_of_shareholders',
         'foreignPercent': 'foreign_percent',
-        'outStandingShare': 'out_standing_share',
+        'outstandingShare': 'outstanding_share',
         'issueShare': 'issue_share',
         'establishedYear': 'established_year',
         'noEmployees': 'no_employees',
         'stockRating': 'stock_rating',
         'deltaInWeek': 'delta_in_week',
         'deltaInMonth': 'delta_in_month',
+        'deltaInYear': 'delta_in_year',
         'shortName': 'short_name',
         'industryEn': 'industry_en',
         'industryID': 'industry_id',
         'industryIDv2': 'industry_id_v2'
-    })
+    },
+        inplace=True)
 
     try:
         co_df.to_sql('companies_overview', con=engine, if_exists='replace', index=False)
@@ -228,6 +270,63 @@ def exact_historical_data(df: pd.DataFrame):
         sh_df.to_sql('stock_historical_data_one_day', con=engine, if_exists='append', index=False)
 
         print(f"Insert stock historical data of year {year} completely!")
+
+    except Exception as e:
+        print(f"Error here:{e}")
+
+
+def extract_daily_price_stock_data(df: pd.DataFrame):
+    print("Starting extracting stock historical data...")
+
+    ticker_df = df['ticker']
+
+    columns = ['time', 'open', 'high', 'low', 'close', 'volume', 'ticker']
+
+    dtypes = {
+        'time': 'object',
+        'open': 'int64',
+        'high': 'int64',
+        'low': 'int64',
+        'close': 'int64',
+        'volume': 'int64',
+        'ticker': 'object'
+    }
+
+    sh_df = pd.DataFrame(columns=columns)
+
+    # Set data types for the columns
+    for column, dtype in dtypes.items():
+        sh_df[column] = sh_df[column].astype(dtype)
+
+    end_date = datetime.date.today().strftime('%Y-%m-%d')
+    start_date = (datetime.datetime.strptime(end_date, '%Y-%m-%d')
+                  - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+
+    for ticker in ticker_df:
+        try:
+            stock_historical_data = vnstock.stock_historical_data(symbol=ticker,
+                                                                  start_date=start_date,
+                                                                  end_date=end_date,
+                                                                  resolution='1D',
+                                                                  type='stock',
+                                                                  beautify=True,
+                                                                  decor=False,
+                                                                  source='TCBS')
+            print(ticker)
+
+        except KeyError:
+            continue
+        except pd.errors.IntCastingNaNError:
+            continue
+
+        sh_df = pd.concat([sh_df, stock_historical_data])
+
+        time.sleep(random.uniform(0.2, 0.4))
+
+    try:
+        sh_df.to_sql('stock_historical_data_one_day', con=engine, if_exists='append', index=False)
+
+        print(f"Insert daily stock price data completely!")
 
     except Exception as e:
         print(f"Error here:{e}")
@@ -305,13 +404,13 @@ def extract_general_rating_data(df: pd.DataFrame):
 
 
 def main():
-    cld_df = extract_companies_list_default_data()
+    # cld_df = extract_companies_list_default_data()
 
-    # cll_df = extract_companies_list_live_data()
+    cll_df = extract_companies_list_live_data()
 
-    # extract_companies_overview_data(cll_df)
+    extract_companies_overview_data(cll_df)
 
-    exact_historical_data(cld_df)
+    # exact_historical_data(cld_df)
 
     # extract_general_rating_data(cll_df)
 

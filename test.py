@@ -1,4 +1,6 @@
 # import ssi_fc_data
+import time
+
 from SSI import config
 import json
 from ssi_fc_data.fc_md_stream import MarketDataStream
@@ -21,19 +23,12 @@ def main():
 
     mm = MarketDataStream(config, MarketDataClient(config))
 
-    mess = mm.start(get_market_data, get_error, selected_channel)
+    mm.start(get_market_data, get_error, selected_channel)
 
-    print(type(mess))
+    while True:
+        print("after")
 
-    message = None
-
-    while message != "exit()":
-        message = input("Message here: ")
-
-        if message is not None and message != "" and message != "exit()":
-            print("Check")
-
-            mm.swith_channel(message)
+        time.sleep(1)
 
 
 main()

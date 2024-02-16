@@ -1,6 +1,8 @@
 USE demo;
 
-CREATE TABLE IF NOT EXISTS companies_list_default (
+DROP TABLE IF EXISTS companies_list_default;
+
+CREATE TABLE companies_list_default (
     ticker VARCHAR(255) PRIMARY KEY,
     com_group_code VARCHAR(255),
     organ_name VARCHAR(255),
@@ -40,7 +42,7 @@ CREATE TABLE IF NOT EXISTS companies_list_default (
 
 DROP TABLE IF EXISTS companies_list_live;
 
-CREATE TABLE IF NOT EXISTS companies_list_live (
+CREATE TABLE companies_list_live (
     organ_code VARCHAR(50),
     ticker VARCHAR(5) PRIMARY KEY,
     com_group_code VARCHAR(10),
