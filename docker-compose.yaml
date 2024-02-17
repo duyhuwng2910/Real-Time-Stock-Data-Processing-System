@@ -1,10 +1,17 @@
 version: "1.0"
 
+networks:
+  kafka-cluster:
+    driver: bridge
+
 services:
   kafka-0:
     image: bitnami/kafka:latest
+    container_name: kafka-0
+    networks:
+      - kafka-cluster
     ports:
-      - "9092:9092"
+      - "9092"
     environment:
       # KRaft settings
       - KAFKA_CFG_NODE_ID=0
@@ -27,6 +34,9 @@ services:
 
   kafka-1:
     image: bitnami/kafka:latest
+    container_name: kafka-1
+    networks:
+      - kafka-cluster
     ports:
       - "9092"
     environment:
@@ -51,6 +61,9 @@ services:
 
   kafka-2:
     image: bitnami/kafka:latest
+    container_name: kafka-2
+    networks:
+      - kafka-cluster
     ports:
       - "9092"
     environment:
@@ -75,6 +88,9 @@ services:
 
   kafka-3:
     image: bitnami/kafka:latest
+    container_name: kafka-3
+    networks:
+      - kafka-cluster
     ports:
       - "9092"
     environment:
@@ -99,6 +115,9 @@ services:
 
   kafka-4:
     image: bitnami/kafka:latest
+    container_name: kafka-4
+    networks:
+      - kafka-cluster
     ports:
       - "9092"
     environment:
