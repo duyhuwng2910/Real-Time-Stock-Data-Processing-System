@@ -11,7 +11,7 @@ services:
     networks:
       - kafka-cluster
     ports:
-      - "9092"
+      - "9092:9092"
     environment:
       # KRaft settings
       - KAFKA_CFG_NODE_ID=0
@@ -25,12 +25,9 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       # Clustering
-      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=5
-      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=5
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=4
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=4
       - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=4
-      # Replications and partitions
-      - KAFKA_TOPIC_DEFAULT_REPLICATION_FACTOR=4
-      - KAFKA_TOPIC_DEFAULT_PARTITIONS=5
 
   kafka-1:
     image: bitnami/kafka:latest
@@ -52,12 +49,9 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       # Clustering
-      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=5
-      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=5
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=4
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=4
       - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=4
-      # Replications and partitions
-      - KAFKA_TOPIC_DEFAULT_REPLICATION_FACTOR=4
-      - KAFKA_TOPIC_DEFAULT_PARTITIONS=5
 
   kafka-2:
     image: bitnami/kafka:latest
@@ -79,12 +73,9 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       # Clustering
-      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=5
-      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=5
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=4
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=4
       - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=4
-      # Replications and partitions
-      - KAFKA_TOPIC_DEFAULT_REPLICATION_FACTOR=4
-      - KAFKA_TOPIC_DEFAULT_PARTITIONS=5
 
   kafka-3:
     image: bitnami/kafka:latest
@@ -106,12 +97,9 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       # Clustering
-      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=5
-      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=5
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=4
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=4
       - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=4
-      # Replications and partitions
-      - KAFKA_TOPIC_DEFAULT_REPLICATION_FACTOR=4
-      - KAFKA_TOPIC_DEFAULT_PARTITIONS=5
 
   kafka-4:
     image: bitnami/kafka:latest
@@ -133,9 +121,72 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       # Clustering
-      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=5
-      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=5
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=4
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=4
       - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=4
-      # Replications and partitions
-      - KAFKA_TOPIC_DEFAULT_REPLICATION_FACTOR=4
-      - KAFKA_TOPIC_DEFAULT_PARTITIONS=5
+
+  # Dịch vụ Schema Registry
+  schema-registry:
+    image: bitnami/schema-registry:latest
+    container_name: schema-registry
+    networks:
+      - kafka-cluster
+    ports:
+      - "8081:8081"
+    depends_on:
+      - kafka-0
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - kafka-4
+    environment:
+      - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8081
+      - SCHEMA_REGISTRY_KAFKA_BROKERS=PLAINTEXT://kafka-0:9092,PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092,PLAINTEXT://kafka-4:9092
+
+  # Dịch vụ Control Center
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:latest
+    container_name: control-center
+    networks:
+      - kafka-cluster
+    ports:
+      - "9021:9021"
+    depends_on:
+      - kafka-0
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - kafka-4
+      - schema-registry
+    environment:
+      - CONTROL_CENTER_BOOTSTRAP_SERVERS=PLAINTEXT://kafka-0:9092,PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092,PLAINTEXT://kafka-4:9092
+      - CONTROL_CENTER_SCHEMA_REGISTRY_URL=http://schema-registry:8081
+      - CONTROL_CENTER_REPLICATION_FACTOR=1
+      - CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS=1
+      - CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS=1
+
+  # MySQL container
+  mysql:
+    image: mysql:8.0.36
+    container_name: mysql-docker-compose
+    networks:
+      - kafka-cluster
+    ports:
+      - "3306:3306"
+    volumes:
+      - daa341d89af694de5a878ef7a05b7aac80365c21e11e0afa5a877181c60dfabe:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=demo
+      - MYSQL_ROOT_PASSWORD=root
+
+  grafana:
+    image: grafana/grafana:latest
+    networks:
+      - kafka-cluster
+    container_name: grafana-docker-compose
+    ports:
+      - "3000:3000"
+
+volumes:
+  daa341d89af694de5a878ef7a05b7aac80365c21e11e0afa5a877181c60dfabe:
+    external: true
