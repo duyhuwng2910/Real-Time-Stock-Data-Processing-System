@@ -142,7 +142,7 @@ services:
       - SPARK_USER=spark
     volumes:
       - ./Spark/test_spark_docker.py:/opt/bitnami/spark/test_spark_docker.py
-      - ./error_companies_overview_list.csv:/opt/bitnami/spark/error_companies_overview_list.csv
+      - ./Spark/test.csv:/opt/bitnami/spark/test.csv
     command: ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
 
   spark-worker-1:
