@@ -36,7 +36,7 @@ def load(data: dict):
     message = producer.send('demo', data)
 
     # Chờ phản hồi
-    record_metadata = message.get(timeout=10)  # Chờ tối đa 10 giây
+    record_metadata = message.get(5)  # Chờ tối đa 10 giây
 
     # Kiểm tra phản hồi
     if record_metadata.topic == 'demo':
@@ -46,8 +46,8 @@ def load(data: dict):
 
 
 if __name__ == "__main__":
-    producer = KafkaProducer(bootstrap_servers='localhost:9092',
-                             value_serializer=lambda x: json.dumps(x).encode('utf8'))  # Serialize json messages
+    producer = KafkaProducer(bootstrap_servers='localhost:9094',
+                             value_serializer=lambda x: json.dumps(x).encode('utf-8'))  # Serialize json messages
 
     finnhub_client = finnhub.Client(api_key="cmm8tr9r01qqjtfo9h6gcmm8tr9r01qqjtfo9h70")
 
@@ -61,6 +61,10 @@ if __name__ == "__main__":
 
     stock_df = pd.DataFrame(columns=["symbol", "timestamps", "current_price", "change_value", "change_rate",
                                      "open", "high", "low", "previous_price"])
+
+    print("Starting sending messages...")
+
+    time.sleep(1)
 
     for ticker in top_tickers:
         stock_data = extract(ticker)

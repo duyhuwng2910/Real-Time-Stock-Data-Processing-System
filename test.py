@@ -8,9 +8,10 @@ import json
 
 from kafka import KafkaProducer
 
-producer = KafkaProducer(bootstrap_servers='localhost:9094',
-                         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+bootstrap_servers = ['localhost:29093', 'localhost:29094']
 
+producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
+                         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 trade_list = []
 
 
@@ -23,7 +24,7 @@ def get_market_data(message):
     kafka_message = producer.send('demo', message)
 
     # Chờ phản hồi
-    record_metadata = kafka_message.get()
+    record_metadata = kafka_message.get(5)
 
     # Kiểm tra phản hồi
     if record_metadata.topic == 'demo':

@@ -53,7 +53,9 @@ CREATE TABLE companies_list_live (
     organ_short_name VARCHAR(255)
 );
 
-CREATE TABLE IF NOT EXISTS companies_overview (
+DROP TABLE IF EXIST companies_overview;
+
+CREATE TABLE companies_overview (
     ticker VARCHAR(255) PRIMARY KEY,
     exchange_name VARCHAR(255),
     industry VARCHAR(255),
@@ -75,7 +77,9 @@ CREATE TABLE IF NOT EXISTS companies_overview (
     website VARCHAR(255)
 );
 
-CREATE TABLE IF NOT EXISTS stock_historical_data_one_min (
+DROP TABLE IF EXISTS stock_historical_data_one_min;
+
+CREATE TABLE stock_historical_data_one_min (
     `time` DATETIME,
     `open` INTEGER,
     high INTEGER,
@@ -85,7 +89,9 @@ CREATE TABLE IF NOT EXISTS stock_historical_data_one_min (
     ticker VARCHAR(10) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS stock_historical_data_three_mins (
+DROP TABLE IF EXISTS stock_historical_data_three_mins;
+
+CREATE TABLE stock_historical_data_three_mins (
     `time` DATETIME,
     `open` INTEGER,
     high INTEGER,
@@ -95,7 +101,9 @@ CREATE TABLE IF NOT EXISTS stock_historical_data_three_mins (
     ticker VARCHAR(10) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS stock_historical_data_five_mins (
+DROP TABLE IF EXISTS stock_historical_data_five_mins;
+
+CREATE TABLE stock_historical_data_five_mins (
     `time` DATETIME,
     `open` INTEGER,
     high INTEGER,
@@ -105,7 +113,9 @@ CREATE TABLE IF NOT EXISTS stock_historical_data_five_mins (
     ticker VARCHAR(10) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS stock_historical_data_fifteen_mins (
+DROP TABLE IF EXISTS stock_historical_data_fifteen_mins;
+
+CREATE TABLE stock_historical_data_fifteen_mins (
     `time` DATETIME,
     `open` INTEGER,
     high INTEGER,
@@ -115,7 +125,9 @@ CREATE TABLE IF NOT EXISTS stock_historical_data_fifteen_mins (
     ticker VARCHAR(10) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS stock_historical_data_thirty_mins (
+DROP TABLE IF EXISTS stock_historical_data_thirty_mins;
+
+CREATE TABLE stock_historical_data_thirty_mins (
     `time` DATETIME,
     `open` INTEGER,
     high INTEGER,
@@ -125,7 +137,9 @@ CREATE TABLE IF NOT EXISTS stock_historical_data_thirty_mins (
     ticker VARCHAR(10) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS stock_historical_data_one_hour (
+DROP TABLE IF EXISTS stock_historical_data_one_hour;
+
+CREATE TABLE stock_historical_data_one_hour (
     `time` DATETIME,
     `open` INTEGER,
     high INTEGER,
@@ -135,7 +149,9 @@ CREATE TABLE IF NOT EXISTS stock_historical_data_one_hour (
     ticker VARCHAR(10) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS stock_historical_data_one_day (
+DROP TABLE IF EXISTS stock_historical_data_one_day;
+
+CREATE TABLE stock_historical_data_one_day (
     `time` DATETIME,
     `open` INTEGER,
     high INTEGER,
@@ -145,18 +161,9 @@ CREATE TABLE IF NOT EXISTS stock_historical_data_one_day (
     ticker VARCHAR(10) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS stock_intraday_data (
-    ticker VARCHAR(10) PRIMARY KEY,
-    `time` DATETIME,
-    order_type VARCHAR(20),
-    investor_type VARCHAR(20),
-    volume BIGINT,
-    average_price FLOAT,
-    order_count INT,
-    previous_price_change FLOAT
-);
+DROP TABLE IF EXISTS general_rating;
 
-CREATE TABLE IF NOT EXISTS general_rating (
+CREATE TABLE general_rating (
   ticker VARCHAR(255) PRIMARY KEY,
   stock_rating FLOAT,
   valuation FLOAT,

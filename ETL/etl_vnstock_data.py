@@ -40,7 +40,49 @@ def extract_companies_list_default_data():
     '''
         First way to insert
     '''
-    # # Prepare SQL statement with placeholders for values
+    # Prepare SQL statement with placeholders for values
+    # cursor.execute("DROP TABLE IF EXISTS companies_list_default;")
+    #
+    # cursor.execute("""
+    #     CREATE TABLE companies_list_default (
+    #         ticker VARCHAR(255) PRIMARY KEY,
+    #         com_group_code VARCHAR(255),
+    #         organ_name VARCHAR(255),
+    #         organ_short_name VARCHAR(255),
+    #         organ_type_code VARCHAR(255),
+    #         com_type_code VARCHAR(255),
+    #         icb_name VARCHAR(255),
+    #         icb_name_path VARCHAR(255),
+    #         sector VARCHAR(255),
+    #         industry VARCHAR(255),
+    #         group_name VARCHAR(255),
+    #         sub_group VARCHAR(255),
+    #         icb_code BIGINT,
+    #         VN30 BOOLEAN,
+    #         VNMID BOOLEAN,
+    #         VN100 BOOLEAN,
+    #         VNSML BOOLEAN,
+    #         VNALL BOOLEAN,
+    #         HNX30 BOOLEAN,
+    #         VNX50 BOOLEAN,
+    #         VNXALL BOOLEAN,
+    #         VNDIAMOND BOOLEAN,
+    #         VNFINLEAD BOOLEAN,
+    #         VNFINSELECT BOOLEAN,
+    #         VNSI BOOLEAN,
+    #         VNCOND BOOLEAN,
+    #         VNCONS BOOLEAN,
+    #         VNENE BOOLEAN,
+    #         VNFIN BOOLEAN,
+    #         VNHEAL BOOLEAN,
+    #         VNIND BOOLEAN,
+    #         VNIT BOOLEAN,
+    #         VNMAT BOOLEAN,
+    #         VNREAL BOOLEAN,
+    #         VNUTI BOOLEAN
+    #     );
+    # """)
+    #
     # statement = "INSERT INTO companies_list_default (ticker, com_group_code, organ_name, organ_short_name, " \
     #             "organ_type_code, com_type_code, icb_name, icb_name_path, sector, industry, group_name, sub_group, " \
     #             "icb_code, VN30, VNMID, VN100, VNSML, VNALL, HNX30, VNX50, VNXALL, VNDIAMOND, VNFINLEAD, " \
@@ -53,6 +95,8 @@ def extract_companies_list_default_data():
     #         values = tuple(row)  # Convert DataFrame row to tuple
     #         cursor.execute(statement, values)
     #     print("Insert default companies list data completely!")
+    #
+    #     return df
     #
     # except mysql.connector.Error as err:
     #     print("Error inserting row:", err)
@@ -100,7 +144,9 @@ def extract_companies_list_default_data():
     }
 
     try:
-        df.to_sql('companies_list_default', con=engine, if_exists='replace', index=False, dtype=sql_type)
+        df.to_sql('companies_list_default', con=engine, if_exists='replace', index=False,
+                  index_label='ticker',
+                  dtype=sql_type)
 
         print("Insert default companies list data completely!")
 
@@ -125,7 +171,18 @@ def extract_companies_list_live_data():
               inplace=True)
 
     try:
-        # df.to_sql('companies_list_live', con=engine, if_exists='replace', index=False)
+        df.to_sql('companies_list_live', con=engine, if_exists='replace', index=False,
+                  index_label='ticker',
+                  dtype={
+                      'organ_code': types.VARCHAR(50),
+                      'ticker': types.VARCHAR(15),
+                      'com_group_code': types.VARCHAR(10),
+                      'icb_code': types.VARCHAR(50),
+                      'organ_type_code': types.VARCHAR(5),
+                      'com_type_code': types.VARCHAR(10),
+                      'organ_name': types.VARCHAR(255),
+                      'organ_short_name': types.VARCHAR(255)
+                  })
 
         print("Insert live companies list completely!")
 
@@ -140,62 +197,56 @@ def extract_companies_overview_data(df: pd.DataFrame):
 
     ticker_df = df['ticker']
 
-    # Define the column names and data types
-    columns = [
-        'ticker', 'exchange', 'industry', 'companyType', 'noShareholders',
-        'foreignPercent', 'outstandingShare', 'issueShare', 'establishedYear',
-        'noEmployees', 'stockRating', 'deltaInWeek', 'deltaInMonth', 'deltaInYear',
-        'shortName', 'industryEn', 'industryID', 'industryIDv2', 'website'
-    ]
-
-    dtypes = {
-        'ticker': 'object',
-        'exchange': 'object',
-        'industry': 'object',
-        'companyType': 'object',
-        'noShareholders': 'int64',
-        'foreignPercent': 'float64',
-        'outstandingShare': 'float64',
-        'issueShare': 'float64',
-        'establishedYear': 'object',
-        'noEmployees': 'int64',
-        'stockRating': 'float64',
-        'deltaInWeek': 'float64',
-        'deltaInMonth': 'float64',
-        'deltaInYear': 'float64',
-        'shortName': 'object',
-        'industryEn': 'object',
-        'industryID': 'int64',
-        'industryIDv2': 'object',
-        'website': 'object'
+    structure = {
+        "ticker": pd.Series([], dtype="object"),
+        "exchange": pd.Series([], dtype="object"),
+        "industry": pd.Series([], dtype="object"),
+        "companyType": pd.Series([], dtype="object"),
+        "noShareholders": pd.Series([], dtype="int64"),
+        "foreignPercent": pd.Series([], dtype="float64"),
+        "outstandingShare": pd.Series([], dtype="float64"),
+        "issueShare": pd.Series([], dtype="float64"),
+        "establishedYear": pd.Series([], dtype="object"),
+        "noEmployees": pd.Series([], dtype="int64"),
+        "stockRating": pd.Series([], dtype="float64"),
+        "deltaInWeek": pd.Series([], dtype="float64"),
+        "deltaInMonth": pd.Series([], dtype="float64"),
+        "deltaInYear": pd.Series([], dtype="float64"),
+        "shortName": pd.Series([], dtype="object"),
+        "industryEn": pd.Series([], dtype="object"),
+        "industryID": pd.Series([], dtype="int64"),
+        "industryIDv2": pd.Series([], dtype="object"),
+        "website": pd.Series([], dtype="object"),
     }
 
     # Create an empty DataFrame with the specified schema
-    co_df = pd.DataFrame(columns=columns)
+    co_df = pd.DataFrame(structure)
 
-    # Set data types for the columns
-    for column, dtype in dtypes.items():
-        co_df[column] = co_df[column].astype(dtype)
+    error_df = pd.DataFrame({'ticker': []})
 
     for ticker in ticker_df:
-        print(ticker)
         try:
             company_overview = vnstock.company_overview(ticker)
 
             co_df = pd.concat([co_df, company_overview])
 
-        except KeyError:
+            print(ticker)
+        except Exception as e:
+            error_df.loc[len(error_df), 'ticker'] = ticker
+
+            print(f"Error while ingesting {ticker} data:{e}")
+
             continue
 
     co_df.rename(columns={
-        'exchangeName': 'exchange_name',
+        'exchange': 'exchange_name',
         'companyType': 'company_type',
         'noShareholders': 'number_of_shareholders',
         'foreignPercent': 'foreign_percent',
         'outstandingShare': 'outstanding_share',
         'issueShare': 'issue_share',
         'establishedYear': 'established_year',
-        'noEmployees': 'no_employees',
+        'noEmployees': 'number_of_employees',
         'stockRating': 'stock_rating',
         'deltaInWeek': 'delta_in_week',
         'deltaInMonth': 'delta_in_month',
@@ -208,10 +259,39 @@ def extract_companies_overview_data(df: pd.DataFrame):
         inplace=True)
 
     try:
-        co_df.to_sql('companies_overview', con=engine, if_exists='replace', index=False)
+        co_df.to_sql('companies_overview', con=engine, if_exists='replace', index=False,
+                     index_label='ticker',
+                     dtype={
+                        'ticker': types.VARCHAR(255),
+                        'exchange_name': types.VARCHAR(255),
+                        'industry': types.VARCHAR(255),
+                        'company_type': types.VARCHAR(255),
+                        'no_share_holders': types.BIGINT,
+                        'foreign_percent': types.FLOAT,
+                        'out_standing_share': types.FLOAT,
+                        'issue_share': types.FLOAT,
+                        'established_year': types.VARCHAR(255),
+                        'no_employees': types.BIGINT,
+                        'stock_rating': types.FLOAT,
+                        'delta_in_week': types.FLOAT,
+                        'delta_in_month': types.FLOAT,
+                        'delta_in_year': types.FLOAT,
+                        'short_name': types.VARCHAR(255),
+                        'industry_en': types.VARCHAR(255),
+                        'industry_id': types.INT,
+                        'industry_id_v2': types.VARCHAR(255),
+                        'website': types.VARCHAR(255)
+                     })
 
         print("Insert companies overview data completely!")
 
+    except Exception as e:
+        print(f"Error here:{e}")
+
+    try:
+        error_df.to_csv('error_companies_overview_list.csv')
+
+        print("export sucessfully!")
     except Exception as e:
         print(f"Error here:{e}")
 
@@ -395,7 +475,8 @@ def extract_general_rating_data(df: pd.DataFrame):
         inplace=True)
 
     try:
-        gr_df.to_sql('general_rating', con=engine, if_exists='replace', index=False)
+        gr_df.to_sql('general_rating', con=engine, if_exists='replace', index=False,
+                     index_label='ticker')
 
         print("Insert general rating data completely!")
 
@@ -406,9 +487,9 @@ def extract_general_rating_data(df: pd.DataFrame):
 def main():
     # cld_df = extract_companies_list_default_data()
 
-    cll_df = extract_companies_list_live_data()
+    # cll_df = extract_companies_list_live_data()
 
-    extract_companies_overview_data(cll_df)
+    # extract_companies_overview_data(cll_df)
 
     # exact_historical_data(cld_df)
 

@@ -4,7 +4,7 @@ from pyspark.sql.types import *
 
 
 kafka_topic_name = "demo"
-kafka_bootstrap_servers = "localhost:9092"
+kafka_bootstrap_servers = "localhost:9094"
 
 
 if __name__ == "__main__":
