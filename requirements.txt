@@ -1,7 +1,9 @@
-kafka-python~=2.0.2
-pandas~=2.2.0
-pyspark~=3.5.0
-cassandra-driver~=3.29.0
-vnstock~=0.2.8.8
-mysql-connector-python~=8.3.0
-SQLAlchemy~=2.0.25
+kafka-python>=2.0.2
+pandas>=2.2.0
+cassandra-driver>=3.29.0
+vnstock>=0.2.8.8
+mysql-connector-python>=8.0.36
+SQLAlchemy>=2.0.25
+bs4>=0.0.2
+ssi_fc_data>=2.2.1
+vnstock_data>=0.0.1

@@ -41,119 +41,81 @@ def extract_companies_list_default_data():
         First way to insert
     '''
     # Prepare SQL statement with placeholders for values
-    # cursor.execute("DROP TABLE IF EXISTS companies_list_default;")
-    #
-    # cursor.execute("""
-    #     CREATE TABLE companies_list_default (
-    #         ticker VARCHAR(255) PRIMARY KEY,
-    #         com_group_code VARCHAR(255),
-    #         organ_name VARCHAR(255),
-    #         organ_short_name VARCHAR(255),
-    #         organ_type_code VARCHAR(255),
-    #         com_type_code VARCHAR(255),
-    #         icb_name VARCHAR(255),
-    #         icb_name_path VARCHAR(255),
-    #         sector VARCHAR(255),
-    #         industry VARCHAR(255),
-    #         group_name VARCHAR(255),
-    #         sub_group VARCHAR(255),
-    #         icb_code BIGINT,
-    #         VN30 BOOLEAN,
-    #         VNMID BOOLEAN,
-    #         VN100 BOOLEAN,
-    #         VNSML BOOLEAN,
-    #         VNALL BOOLEAN,
-    #         HNX30 BOOLEAN,
-    #         VNX50 BOOLEAN,
-    #         VNXALL BOOLEAN,
-    #         VNDIAMOND BOOLEAN,
-    #         VNFINLEAD BOOLEAN,
-    #         VNFINSELECT BOOLEAN,
-    #         VNSI BOOLEAN,
-    #         VNCOND BOOLEAN,
-    #         VNCONS BOOLEAN,
-    #         VNENE BOOLEAN,
-    #         VNFIN BOOLEAN,
-    #         VNHEAL BOOLEAN,
-    #         VNIND BOOLEAN,
-    #         VNIT BOOLEAN,
-    #         VNMAT BOOLEAN,
-    #         VNREAL BOOLEAN,
-    #         VNUTI BOOLEAN
-    #     );
-    # """)
-    #
-    # statement = "INSERT INTO companies_list_default (ticker, com_group_code, organ_name, organ_short_name, " \
-    #             "organ_type_code, com_type_code, icb_name, icb_name_path, sector, industry, group_name, sub_group, " \
-    #             "icb_code, VN30, VNMID, VN100, VNSML, VNALL, HNX30, VNX50, VNXALL, VNDIAMOND, VNFINLEAD, " \
-    #             "VNFINSELECT, VNSI, VNCOND, VNCONS, VNENE, VNFIN, VNHEAL, VNIND, VNIT, VNMAT, VNREAL, VNUTI) " \
-    #             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    #
-    # # Iterate through DataFrame rows and insert values
-    # try:
-    #     for row in df.itertuples(index=False):
-    #         values = tuple(row)  # Convert DataFrame row to tuple
-    #         cursor.execute(statement, values)
-    #     print("Insert default companies list data completely!")
-    #
-    #     return df
-    #
-    # except mysql.connector.Error as err:
-    #     print("Error inserting row:", err)
+    cursor.execute("DELETE FROM companies_list_default;")
+    
+    statement = "INSERT INTO companies_list_default (ticker, com_group_code, organ_name, organ_short_name, " \
+                "organ_type_code, com_type_code, icb_name, icb_name_path, sector, industry, group_name, sub_group, " \
+                "icb_code, VN30, VNMID, VN100, VNSML, VNALL, HNX30, VNX50, VNXALL, VNDIAMOND, VNFINLEAD, " \
+                "VNFINSELECT, VNSI, VNCOND, VNCONS, VNENE, VNFIN, VNHEAL, VNIND, VNIT, VNMAT, VNREAL, VNUTI) " \
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    
+    # Iterate through DataFrame rows and insert values
+    try:
+        for row in df.itertuples(index=False):
+            values = tuple(row)  # Convert DataFrame row to tuple
+            
+            cursor.execute(statement, values)
+            
+        print("Insert default companies list data completely!")
+    
+        return df
+    
+    except mysql.connector.Error as err:
+        print("Error while inserting row:", err)
 
     '''
         Second way to insert
     '''
-    # Cấu hình kiểu dữ liệu cho các cột
-    sql_type = {
-        'ticker': types.VARCHAR(255),
-        'com_group_code': types.VARCHAR(255),
-        'organ_name': types.VARCHAR(255),
-        'organ_short_name': types.VARCHAR(255),
-        'organ_type_code': types.VARCHAR(255),
-        'com_type_code': types.VARCHAR(255),
-        'icb_name': types.VARCHAR(255),
-        'icb_name_path': types.VARCHAR(255),
-        'sector': types.VARCHAR(255),
-        'industry': types.VARCHAR(255),
-        'group_name': types.VARCHAR(255),
-        'sub_group': types.VARCHAR(255),
-        'icb_code': types.BIGINT,
-        'VN30': types.Boolean(),
-        'VNMID': types.Boolean(),
-        'VN100': types.Boolean(),
-        'VNSML': types.Boolean(),
-        'VNALL': types.Boolean(),
-        'HNX30': types.Boolean(),
-        'VNX50': types.Boolean(),
-        'VNXALL': types.Boolean(),
-        'VNDIAMOND': types.Boolean(),
-        'VNFINLEAD': types.Boolean(),
-        'VNFINSELECT': types.Boolean(),
-        'VNSI': types.Boolean(),
-        'VNCOND': types.Boolean(),
-        'VNCONS': types.Boolean(),
-        'VNENE': types.Boolean(),
-        'VNFIN': types.Boolean(),
-        'VNHEAL': types.Boolean(),
-        'VNIND': types.Boolean(),
-        'VNIT': types.Boolean(),
-        'VNMAT': types.Boolean(),
-        'VNREAL': types.Boolean(),
-        'VNUTI': types.Boolean()
-    }
+    # # Cấu hình kiểu dữ liệu cho các cột
+    # sql_type = {
+    #     'ticker': types.VARCHAR(255),
+    #     'com_group_code': types.VARCHAR(255),
+    #     'organ_name': types.VARCHAR(255),
+    #     'organ_short_name': types.VARCHAR(255),
+    #     'organ_type_code': types.VARCHAR(255),
+    #     'com_type_code': types.VARCHAR(255),
+    #     'icb_name': types.VARCHAR(255),
+    #     'icb_name_path': types.VARCHAR(255),
+    #     'sector': types.VARCHAR(255),
+    #     'industry': types.VARCHAR(255),
+    #     'group_name': types.VARCHAR(255),
+    #     'sub_group': types.VARCHAR(255),
+    #     'icb_code': types.BIGINT,
+    #     'VN30': types.Boolean(),
+    #     'VNMID': types.Boolean(),
+    #     'VN100': types.Boolean(),
+    #     'VNSML': types.Boolean(),
+    #     'VNALL': types.Boolean(),
+    #     'HNX30': types.Boolean(),
+    #     'VNX50': types.Boolean(),
+    #     'VNXALL': types.Boolean(),
+    #     'VNDIAMOND': types.Boolean(),
+    #     'VNFINLEAD': types.Boolean(),
+    #     'VNFINSELECT': types.Boolean(),
+    #     'VNSI': types.Boolean(),
+    #     'VNCOND': types.Boolean(),
+    #     'VNCONS': types.Boolean(),
+    #     'VNENE': types.Boolean(),
+    #     'VNFIN': types.Boolean(),
+    #     'VNHEAL': types.Boolean(),
+    #     'VNIND': types.Boolean(),
+    #     'VNIT': types.Boolean(),
+    #     'VNMAT': types.Boolean(),
+    #     'VNREAL': types.Boolean(),
+    #     'VNUTI': types.Boolean()
+    # }
 
-    try:
-        df.to_sql('companies_list_default', con=engine, if_exists='replace', index=False,
-                  index_label='ticker',
-                  dtype=sql_type)
+    # try:
+    #     df.to_sql('companies_list_default', con=engine, if_exists='replace', index=False,
+    #               index_label='ticker',
+    #               dtype=sql_type)
 
-        print("Insert default companies list data completely!")
+    #     print("Insert default companies list data completely!")
 
-        return df
+    #     return df
 
-    except Exception as e:
-        print(f"Error here:{e}")
+    # except Exception as e:
+    #     print(f"Error here:{e}")
 
 
 def extract_companies_list_live_data():
@@ -487,7 +449,7 @@ def extract_general_rating_data(df: pd.DataFrame):
 def main():
     # cld_df = extract_companies_list_default_data()
 
-    # cll_df = extract_companies_list_live_data()
+    cll_df = extract_companies_list_live_data()
 
     # extract_companies_overview_data(cll_df)
 
