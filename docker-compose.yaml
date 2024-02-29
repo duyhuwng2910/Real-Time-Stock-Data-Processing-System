@@ -1,10 +1,7 @@
-version: "1.0"
+version: "2"
 
 networks:
-  kafka-cluster:
-    driver: bridge
-
-  spark-cluster:
+  graduation-thesis:
     driver: bridge
 
 services:
@@ -13,7 +10,7 @@ services:
     hostname: kafka-controller-1
     container_name: kafka-controller-1
     networks:
-      - kafka-cluster
+      - graduation-thesis
     ports:
       - "9092:9092"
     environment:
@@ -38,7 +35,7 @@ services:
     hostname: kafka-broker-1
     container_name: kafka-broker-1
     networks:
-      - kafka-cluster
+      - graduation-thesis
     ports:
       - '9093:9093'
       - '29093:29093'
@@ -65,7 +62,7 @@ services:
     hostname: kafka-broker-2
     container_name: kafka-broker-2
     networks:
-      - kafka-cluster
+      - graduation-thesis
     ports:
       - '9094:9094'
       - '29094:29094'
@@ -92,7 +89,7 @@ services:
     image: confluentinc/cp-schema-registry:latest
     container_name: schema-registry
     networks:
-      - kafka-cluster
+      - graduation-thesis
     ports:
       - "8081:8081"
     depends_on:
@@ -109,7 +106,7 @@ services:
     image: confluentinc/cp-enterprise-control-center:latest
     container_name: control-center
     networks:
-      - kafka-cluster
+      - graduation-thesis
     ports:
       - "9021:9021"
     depends_on:
@@ -129,7 +126,7 @@ services:
     image: bitnami/spark:latest
     container_name: spark-master
     networks:
-      - spark-cluster
+      - graduation-thesis
     ports:
       - '8080:8080'
       - '7077:7077'
@@ -142,14 +139,14 @@ services:
       - SPARK_USER=spark
     volumes:
       - ./Spark/test_spark_docker.py:/opt/bitnami/spark/test_spark_docker.py
-      - ./error_companies_overview_list.csv:/opt/bitnami/spark/error_companies_overview_list.csv
+      - ./Spark/test.csv:/opt/bitnami/spark/test.csv
     command: ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
 
   spark-worker-1:
     image: bitnami/spark:latest
     hostname: spark-worker-1
     networks:
-      - spark-cluster
+      - graduation-thesis
     depends_on:
       - spark-master
     ports:
@@ -165,13 +162,16 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
+    volumes:
+      - ./Spark/test_spark_docker.py:/opt/bitnami/spark/test_spark_docker.py
+      - ./Spark/test.csv:/opt/bitnami/spark/test.csv
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
 
   spark-worker-2:
     image: bitnami/spark:latest
     hostname: spark-worker-2
     networks:
-      - spark-cluster
+      - graduation-thesis
     depends_on:
       - spark-master
     ports:
@@ -187,18 +187,21 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
+    volumes:
+      - ./Spark/test_spark_docker.py:/opt/bitnami/spark/test_spark_docker.py
+      - ./Spark/test.csv:/opt/bitnami/spark/test.csv
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
 
-  # Cấu hình MySQL container
+    # Cấu hình MySQL container
   mysql:
     image: mysql:8.0.36
-    container_name: mysql-docker-compose
+    container_name: mysql
     networks:
-      - kafka-cluster
+      - graduation-thesis
     ports:
       - "3306:3306"
     volumes:
-      - daa341d89af694de5a878ef7a05b7aac80365c21e11e0afa5a877181c60dfabe:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=demo
       - MYSQL_ROOT_PASSWORD=root
@@ -207,11 +210,10 @@ services:
   grafana:
     image: grafana/grafana:latest
     networks:
-      - kafka-cluster
-    container_name: grafana-docker-compose
+      - graduation-thesis
+    container_name: grafana
     ports:
       - "3000:3000"
 
 volumes:
-  daa341d89af694de5a878ef7a05b7aac80365c21e11e0afa5a877181c60dfabe:
-    external: true
+  mysql_data:

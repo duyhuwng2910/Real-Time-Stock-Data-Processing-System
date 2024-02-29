@@ -26,13 +26,16 @@ def streaming(streams: MarketDataStream, ticker: str):
         time.sleep(1)
 
 
+stream = MarketDataStream(config, MarketDataClient(config))
+
+
 def main():
-    ticker_list = ['BID', 'CTG', 'TCB']
+    ticker_list = ['ACB', 'BID', 'CTG', 'HDB', 'MBB', 'SHB', 'STB', 'TCB', 'TPB', 'VCB', 'VIB', 'VPB']
 
     thread_list = []
 
     for ticker in ticker_list:
-        stream = MarketDataStream(config, MarketDataClient(config))
+        # stream = MarketDataStream(config, MarketDataClient(config))
         
         thread = threading.Thread(target=streaming, args=(stream, ticker))
 

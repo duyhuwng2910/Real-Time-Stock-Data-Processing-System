@@ -1,4 +1,4 @@
-version: "1"
+version: "2.0"
 
 networks:
   graduation-thesis:
@@ -139,7 +139,6 @@ services:
       - SPARK_USER=spark
     volumes:
       - ./Spark/test_spark_docker.py:/opt/bitnami/spark/test_spark_docker.py
-      - ./Spark/test.csv:/opt/bitnami/spark/test.csv
     command: ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
 
   spark-worker-1:
@@ -164,7 +163,6 @@ services:
       - SPARK_USER=spark
     volumes:
       - ./Spark/test_spark_docker.py:/opt/bitnami/spark/test_spark_docker.py
-      - ./Spark/test.csv:/opt/bitnami/spark/test.csv
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
 
   spark-worker-2:
@@ -189,19 +187,18 @@ services:
       - SPARK_USER=spark
     volumes:
       - ./Spark/test_spark_docker.py:/opt/bitnami/spark/test_spark_docker.py
-      - ./Spark/test.csv:/opt/bitnami/spark/test.csv
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
-  
-    # Cấu hình MySQL container
+
+  # Cấu hình MySQL container
   mysql:
     image: mysql:8.0.36
-    container_name: mysql
+    container_name: mysql-docker-compose
     networks:
       - graduation-thesis
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - daa341d89af694de5a878ef7a05b7aac80365c21e11e0afa5a877181c60dfabe:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=demo
       - MYSQL_ROOT_PASSWORD=root
@@ -211,9 +208,10 @@ services:
     image: grafana/grafana:latest
     networks:
       - graduation-thesis
-    container_name: grafana
+    container_name: grafana-docker-compose
     ports:
       - "3000:3000"
-  
+
 volumes:
-  mysql_data:
+  daa341d89af694de5a878ef7a05b7aac80365c21e11e0afa5a877181c60dfabe:
+    external: true

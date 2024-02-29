@@ -221,7 +221,7 @@ def extract_companies_overview_data(df: pd.DataFrame):
         inplace=True)
 
     try:
-        co_df.to_sql('companies_overview', con=engine, if_exists='replace', index=False,
+        co_df.to_sql('companies_overview', con=engine, if_exists='append', index=False,
                      index_label='ticker',
                      dtype={
                         'ticker': types.VARCHAR(255),
@@ -251,7 +251,7 @@ def extract_companies_overview_data(df: pd.DataFrame):
         print(f"Error here:{e}")
 
     try:
-        error_df.to_csv('error_companies_overview_list.csv')
+        error_df.to_csv(f'error_companies_overview_list_{datetime.datetime.today()}.csv')
 
         print("export sucessfully!")
     except Exception as e:
@@ -449,7 +449,7 @@ def extract_general_rating_data(df: pd.DataFrame):
 def main():
     # cld_df = extract_companies_list_default_data()
 
-    cll_df = extract_companies_list_live_data()
+    # cll_df = extract_companies_list_live_data()
 
     # extract_companies_overview_data(cll_df)
 
