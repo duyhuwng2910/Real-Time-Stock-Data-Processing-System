@@ -21,12 +21,10 @@ def streaming(streams: MarketDataStream, ticker: str):
     streams.start(get_market_data, get_error, ticker)
 
     while True:
-        print(ticker)
-
-        time.sleep(1)
+        pass
 
 
-stream = MarketDataStream(config, MarketDataClient(config))
+# stream = MarketDataStream(config, MarketDataClient(config))
 
 
 def main():
@@ -35,7 +33,7 @@ def main():
     thread_list = []
 
     for ticker in ticker_list:
-        # stream = MarketDataStream(config, MarketDataClient(config))
+        stream = MarketDataStream(config, MarketDataClient(config))
         
         thread = threading.Thread(target=streaming, args=(stream, ticker))
 

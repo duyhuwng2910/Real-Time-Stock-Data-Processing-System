@@ -3,7 +3,9 @@ import random
 import time
 
 import pandas as pd
+import vnstock_data
 import vnstock
+
 import mysql.connector
 from sqlalchemy import create_engine, types
 
@@ -14,7 +16,7 @@ connection = mysql.connector.connect(user='root',
 
 cursor = connection.cursor()
 
-# Step 2: Create a SQLAlchemy engine to connect to the MySQL database
+# Create a SQLAlchemy engine to connect to the MySQL database
 engine = create_engine("mysql+mysqlconnector://root:root@localhost/demo")
 
 
