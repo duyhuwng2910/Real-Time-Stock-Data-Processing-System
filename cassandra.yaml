@@ -1,0 +1,67 @@
+version: "2"
+
+networks:
+  graduation-thesis:
+    driver: bridge
+services:
+  # Cấu hình cụm Cassandra
+  cassandra-0:
+    image: cassandra:latest
+    container_name: cassandra-0
+    hostname: cassandra-0
+    networks:
+      - graduation-thesis
+    ports:
+      - '9042:9042'
+    volumes:
+      - cassandra_0:/var/lib/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-0,cassandra-1,cassandra-2
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_DC=DC1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+  
+  cassandra-1:
+    image: cassandra:latest
+    container_name: cassandra-1
+    hostname: cassandra-1
+    networks:
+      - graduation-thesis
+    depends_on:
+      - cassandra-0
+    ports:
+      - '9043:9042'
+    volumes:
+      - cassandra_1:/var/lib/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-0,cassandra-1,cassandra-2
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_DC=DC1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+
+  cassandra-2:
+    image: cassandra:latest
+    container_name: cassandra-2
+    hostname: cassandra-2
+    networks:
+      - graduation-thesis
+    depends_on:
+      - cassandra-0
+      - cassandra-1
+    ports:
+      - '9044:9042'
+    volumes:
+      - cassandra_2:/var/lib/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-0,cassandra-1,cassandra-2
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_DC=DC2
+      - CASSANDRA_RACK=rack2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+
+volumes:
+  cassandra_0:
+  cassandra_1:
+  cassandra_2:

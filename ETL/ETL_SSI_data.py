@@ -200,6 +200,31 @@ def get_latest_trading_date():
     str: Ngày dạng 'yyyy-mm-dd'.
     """
     today = datetime.date.today()
+    
+    weekday = today.weekday()
+    
+    # Nếu là thứ Bảy hoặc Chủ Nhật, trả về ngày thứ Sáu của tuần đó
+    if weekday == 5:
+        return (today - datetime.timedelta(days=1))
+    elif weekday == 6:
+        return (today - datetime.timedelta(days=2))
+    else:
+        now = datetime.datetime.now()
+        
+        if now < datetime.datetime.strptime("15:30", "%H:%M"):
+            if weekday == 0:
+                return today - datetime.timedelta(days=3)
+            else:
+                return today - datetime.timedelta(days=1)
+        else:
+            return today
+    """
+    Trả về ngày hiện tại nếu là từ thứ Hai đến thứ Sáu, hoặc trả về ngày thứ Sáu của tuần đó nếu là thứ Bảy hoặc Chủ Nhật.
+
+    Returns:
+    str: Ngày dạng 'yyyy-mm-dd'.
+    """
+    today = datetime.date.today()
     weekday = today.weekday()
     
     # Nếu là thứ Bảy hoặc Chủ Nhật, trả về ngày thứ Sáu của tuần đó

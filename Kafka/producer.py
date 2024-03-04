@@ -1,28 +1,23 @@
 import threading
-import time
+import json
+import sys
 
-from SSI import config
+sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+
+import config
 from ssi_fc_data.fc_md_stream import MarketDataStream
 from ssi_fc_data.fc_md_client import MarketDataClient
 
 import pandas as pd
 
-import json
-
 from kafka import KafkaProducer
 
-stock_df = pd.read_excel('vn_stock.xlsx', sheet_name='Stock')
+bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
-hose_df = stock_df.loc[stock_df['exchange'] == 'HOSE', :]
-
-hose_tickers = hose_df['ticker'].to_list()
+producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
+                         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
 ticker_list = ['VIC', 'VHM', 'VRE', 'MSN', 'SSI', 'TCB', 'VCB', 'BID', 'HPG', 'GAS', 'FPT']
-
-real_time_data = MarketDataStream(config, MarketDataClient(config))
-
-producer = KafkaProducer(bootstrap_servers='localhost:9094',
-                         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
 
 # get market data message
@@ -46,29 +41,39 @@ def get_error(error):
     print(error)
 
 
-def extract_real_time_stock_trading_data(ticker: str):
-    real_time_data.start(get_market_data, get_error, ticker)
+def extract_real_time_stock_trading_data(stream: MarketDataStream, ticker: str):
+    ticker = 'B:' + ticker  
+    
+    stream.start(get_market_data, get_error, ticker)
 
-    message = None
+    # message = None
 
-    while message != "exit()":
-        message = input()
+    # while message != "exit()":
+    #     message = input()
 
-        if message is not None and message != "" and message != "exit()":
-            real_time_data.swith_channel(message)
+    #     if message is not None and message != "" and message != "exit()":
+    #         stream.swith_channel(message)
+
+    while True:
+        pass
 
 
 def main():
-    threads = []
+    threads_list = []
 
     for ticker in ticker_list:
-        thread = threading.Thread(target=extract_real_time_stock_trading_data, args=(ticker,))
+        stream = MarketDataStream(config, MarketDataClient(config))
+        
+        thread = threading.Thread(target=extract_real_time_stock_trading_data, args=(stream, ticker))
 
-        threads.append(thread)
+        threads_list.append(thread)
 
         thread.start()
 
-    for thread in threads:
+    for thread in threads_list:
         thread.join()
 
     print("Finished")
+
+
+main()
