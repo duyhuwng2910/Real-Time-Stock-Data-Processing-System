@@ -6,7 +6,7 @@ bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
 consumer = KafkaConsumer('demo',
                          bootstrap_servers=bootstrap_servers,
-                         auto_offset_reset='earliest',
+                         auto_offset_reset='latest',
                          value_deserializer=lambda x: json.loads(x.decode('utf8')),
                          consumer_timeout_ms=10000)
 

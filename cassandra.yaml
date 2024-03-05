@@ -1,27 +1,49 @@
-version: "2"
+version: "3"
 
 networks:
   graduation-thesis:
     driver: bridge
+
 services:
   # Cấu hình cụm Cassandra
-  cassandra-0:
+  cassandra-seed-1:
     image: cassandra:latest
-    container_name: cassandra-0
-    hostname: cassandra-0
+    container_name: cassandra-seed-1
+    hostname: cassandra-seed-1
     networks:
       - graduation-thesis
     ports:
       - '9042:9042'
     volumes:
-      - cassandra_0:/var/lib/cassandra
+      - cassandra_seed_1:/var/lib/cassandra
     environment:
-      - CASSANDRA_SEEDS=cassandra-0,cassandra-1,cassandra-2
+      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
       - CASSANDRA_CLUSTER_NAME=cassandra-cluster
       - CASSANDRA_DC=DC1
-      - CASSANDRA_RACK=rack1
+      - CASSANDRA_RACK=RACK1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-  
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
+
+  cassandra-seed-2:
+    image: cassandra:latest
+    container_name: cassandra-seed-2
+    hostname: cassandra-seed-2
+    networks:
+      - graduation-thesis
+    ports:
+      - '9043:9042'
+    volumes:
+      - cassandra_seed_2:/var/lib/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_DC=DC2
+      - CASSANDRA_RACK=RACK2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
+
   cassandra-1:
     image: cassandra:latest
     container_name: cassandra-1
@@ -29,17 +51,20 @@ services:
     networks:
       - graduation-thesis
     depends_on:
-      - cassandra-0
+      - cassandra-seed-1
+      - cassandra-seed-2
     ports:
-      - '9043:9042'
+      - '9044:9042'
     volumes:
       - cassandra_1:/var/lib/cassandra
     environment:
-      - CASSANDRA_SEEDS=cassandra-0,cassandra-1,cassandra-2
+      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
       - CASSANDRA_CLUSTER_NAME=cassandra-cluster
       - CASSANDRA_DC=DC1
-      - CASSANDRA_RACK=rack1
+      - CASSANDRA_RACK=RACK1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
 
   cassandra-2:
     image: cassandra:latest
@@ -48,20 +73,23 @@ services:
     networks:
       - graduation-thesis
     depends_on:
-      - cassandra-0
-      - cassandra-1
+      - cassandra-seed-1
+      - cassandra-seed-2
     ports:
-      - '9044:9042'
+      - '9045:9042'
     volumes:
       - cassandra_2:/var/lib/cassandra
     environment:
-      - CASSANDRA_SEEDS=cassandra-0,cassandra-1,cassandra-2
+      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
       - CASSANDRA_CLUSTER_NAME=cassandra-cluster
       - CASSANDRA_DC=DC2
-      - CASSANDRA_RACK=rack2
+      - CASSANDRA_RACK=RACK2
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
 
 volumes:
-  cassandra_0:
+  cassandra_seed_1:
+  cassandra_seed_2:
   cassandra_1:
   cassandra_2:

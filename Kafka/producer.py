@@ -2,13 +2,15 @@ import threading
 import json
 import sys
 
-sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+# Uncomment if you use Windows
+# sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+
+# Uncomment if you use Ubuntu
+sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
 
 import config
 from ssi_fc_data.fc_md_stream import MarketDataStream
 from ssi_fc_data.fc_md_client import MarketDataClient
-
-import pandas as pd
 
 from kafka import KafkaProducer
 
@@ -45,14 +47,6 @@ def extract_real_time_stock_trading_data(stream: MarketDataStream, ticker: str):
     ticker = 'B:' + ticker  
     
     stream.start(get_market_data, get_error, ticker)
-
-    # message = None
-
-    # while message != "exit()":
-    #     message = input()
-
-    #     if message is not None and message != "" and message != "exit()":
-    #         stream.swith_channel(message)
 
     while True:
         pass

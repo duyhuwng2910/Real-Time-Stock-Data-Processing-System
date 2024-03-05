@@ -1,24 +1,25 @@
-import pandas as pd
+import json
+import time
 
-import vnstock_data.ssi as ssi
+from kafka import KafkaProducer
 
-import sys
+bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
-sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
+                         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
-import config
+data = {"RType":"B","TradingDate":"05/03/2024","Time":"14:45:00","Symbol":"HPG","Open":31150.0,"High":31150.0,"Low":31150.0,"Close":31150.0,"Volume":1473600.0,"Value":0.0}
 
-import datetime
+for i in range(100):
+    kafka_message = producer.send('demo', data)
 
-client = ssi.fc_md_client.MarketDataClient(config)
+    # Chờ phản hồi
+    record_metadata = kafka_message.get()
 
-df = pd.read_excel('W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx', sheet_name='Stock')
+    # Kiểm tra phản hồi
+    if record_metadata.topic == 'demo':
+        print("Dữ liệu đã được gửi thành công lên topic")
+    else:
+        print("Lỗi: Dữ liệu không được gửi")
 
-df['first_trading_date'] = df['first_trading_date'].dt.strftime('%Y-%m-%d')
-
-value = df.iloc[0, df.columns.get_loc('exchange')]
-
-if value == 'HOSE':
-    print("ok")
-else:
-    print("error")
+    time.sleep(2)

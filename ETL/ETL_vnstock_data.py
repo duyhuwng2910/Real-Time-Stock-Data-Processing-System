@@ -1,9 +1,6 @@
 import datetime
-import random
-import time
 
 import pandas as pd
-import vnstock_data
 import vnstock
 
 import mysql.connector
@@ -260,122 +257,6 @@ def extract_companies_overview_data(df: pd.DataFrame):
         print(f"Error here:{e}")
 
 
-def exact_historical_data(df: pd.DataFrame):
-    print("Starting extracting stock historical data...")
-
-    ticker_df = df['ticker']
-
-    columns = ['time', 'open', 'high', 'low', 'close', 'volume', 'ticker']
-
-    dtypes = {
-        'time': 'object',
-        'open': 'int64',
-        'high': 'int64',
-        'low': 'int64',
-        'close': 'int64',
-        'volume': 'int64',
-        'ticker': 'object'
-    }
-
-    sh_df = pd.DataFrame(columns=columns)
-
-    # Set data types for the columns
-    for column, dtype in dtypes.items():
-        sh_df[column] = sh_df[column].astype(dtype)
-
-    # For usage purpose
-    year = 2024
-    # for year in range(2021, 2024, 1):
-    for ticker in ticker_df:
-        start_date = str(year) + '-01-01'
-        end_date = str(year) + '-01-31'
-
-        try:
-            stock_historical_data = vnstock.stock_historical_data(symbol=ticker,
-                                                                  start_date=start_date,
-                                                                  end_date=end_date,
-                                                                  resolution='1D',
-                                                                  type='stock',
-                                                                  beautify=True,
-                                                                  decor=False,
-                                                                  source='TCBS')
-            print(ticker)
-
-        except KeyError:
-            continue
-        except pd.errors.IntCastingNaNError:
-            continue
-
-        sh_df = pd.concat([sh_df, stock_historical_data])
-
-        time.sleep(random.uniform(0.2, 0.4))
-
-    try:
-        sh_df.to_sql('stock_historical_data_one_day', con=engine, if_exists='append', index=False)
-
-        print(f"Insert stock historical data of year {year} completely!")
-
-    except Exception as e:
-        print(f"Error here:{e}")
-
-
-def extract_daily_price_stock_data(df: pd.DataFrame):
-    print("Starting extracting stock historical data...")
-
-    ticker_df = df['ticker']
-
-    columns = ['time', 'open', 'high', 'low', 'close', 'volume', 'ticker']
-
-    dtypes = {
-        'time': 'object',
-        'open': 'int64',
-        'high': 'int64',
-        'low': 'int64',
-        'close': 'int64',
-        'volume': 'int64',
-        'ticker': 'object'
-    }
-
-    sh_df = pd.DataFrame(columns=columns)
-
-    # Set data types for the columns
-    for column, dtype in dtypes.items():
-        sh_df[column] = sh_df[column].astype(dtype)
-
-    end_date = datetime.date.today().strftime('%Y-%m-%d')
-    start_date = (datetime.datetime.strptime(end_date, '%Y-%m-%d')
-                  - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-
-    for ticker in ticker_df:
-        try:
-            stock_historical_data = vnstock.stock_historical_data(symbol=ticker,
-                                                                  start_date=start_date,
-                                                                  end_date=end_date,
-                                                                  resolution='1D',
-                                                                  type='stock',
-                                                                  beautify=True,
-                                                                  decor=False,
-                                                                  source='TCBS')
-            print(ticker)
-
-        except KeyError:
-            continue
-        except pd.errors.IntCastingNaNError:
-            continue
-
-        sh_df = pd.concat([sh_df, stock_historical_data])
-
-        time.sleep(random.uniform(0.2, 0.4))
-
-    try:
-        sh_df.to_sql('stock_historical_data_one_day', con=engine, if_exists='append', index=False)
-
-        print(f"Insert daily stock price data completely!")
-
-    except Exception as e:
-        print(f"Error here:{e}")
-
-
 def extract_general_rating_data(df: pd.DataFrame):
     print("Starting extracting general rating data...")
 
@@ -454,8 +335,6 @@ def main():
     # cll_df = extract_companies_list_live_data()
 
     # extract_companies_overview_data(cll_df)
-
-    # exact_historical_data(cld_df)
 
     # extract_general_rating_data(cll_df)
 

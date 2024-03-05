@@ -3,7 +3,7 @@ USE demo;
 DROP TABLE IF EXISTS companies_list_default;
 
 CREATE TABLE companies_list_default (
-    ticker VARCHAR(255) PRIMARY KEY,
+    ticker VARCHAR(20) PRIMARY KEY,
     com_group_code VARCHAR(255),
     organ_name VARCHAR(255),
     organ_short_name VARCHAR(255),
@@ -44,7 +44,7 @@ DROP TABLE IF EXISTS companies_list_live;
 
 CREATE TABLE companies_list_live (
     organ_code VARCHAR(50),
-    ticker VARCHAR(5) PRIMARY KEY,
+    ticker VARCHAR(20) PRIMARY KEY,
     com_group_code VARCHAR(10),
     icb_code NVARCHAR(50),
     organ_type_code VARCHAR(5),
@@ -53,10 +53,10 @@ CREATE TABLE companies_list_live (
     organ_short_name VARCHAR(255)
 );
 
-DROP TABLE IF EXIST companies_overview;
+DROP TABLE IF EXISTS companies_overview;
 
 CREATE TABLE companies_overview (
-    ticker VARCHAR(255) PRIMARY KEY,
+    ticker VARCHAR(20) PRIMARY KEY,
     exchange_name VARCHAR(255),
     industry VARCHAR(255),
     company_type VARCHAR(255),
@@ -86,7 +86,7 @@ CREATE TABLE historical_stock_data_one_min_hose (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_min_hnx;
@@ -98,7 +98,7 @@ CREATE TABLE historical_stock_data_one_min_hnx (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_min_upcom;
@@ -110,7 +110,7 @@ CREATE TABLE historical_stock_data_one_min_upcom (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_min;
@@ -122,7 +122,7 @@ CREATE TABLE historical_stock_data_one_min (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_three_mins_hose;
@@ -134,7 +134,7 @@ CREATE TABLE historical_stock_data_three_mins_hose (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_three_mins_hnx;
@@ -146,7 +146,7 @@ CREATE TABLE historical_stock_data_three_mins_hnx (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_three_mins_upcom;
@@ -158,7 +158,7 @@ CREATE TABLE historical_stock_data_three_mins_upcom (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_three_mins;
@@ -170,7 +170,7 @@ CREATE TABLE historical_stock_data_three_mins (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_five_mins_hose;
@@ -182,7 +182,7 @@ CREATE TABLE historical_stock_data_five_mins_hose (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_five_mins_hnx;
@@ -194,7 +194,7 @@ CREATE TABLE historical_stock_data_five_mins_hnx (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_five_mins_upcom;
@@ -206,7 +206,7 @@ CREATE TABLE historical_stock_data_five_mins_upcom (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_five_mins;
@@ -218,7 +218,7 @@ CREATE TABLE historical_stock_data_five_mins (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_fifteen_mins_hose;
@@ -230,7 +230,7 @@ CREATE TABLE historical_stock_data_fifteen_mins_hose (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_fifteen_mins_hnx;
@@ -242,7 +242,7 @@ CREATE TABLE historical_stock_data_fifteen_mins_hnx (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_fifteen_mins_upcom;
@@ -254,7 +254,7 @@ CREATE TABLE historical_stock_data_fifteen_mins_upcom (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_fifteen_mins;
@@ -266,7 +266,7 @@ CREATE TABLE historical_stock_data_fifteen_mins (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_thirty_mins_hose;
@@ -278,7 +278,7 @@ CREATE TABLE historical_stock_data_thirty_mins_hose (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_thirty_mins_hnx;
@@ -290,7 +290,7 @@ CREATE TABLE historical_stock_data_thirty_mins_hnx (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_thirty_mins_upcom;
@@ -302,7 +302,7 @@ CREATE TABLE historical_stock_data_thirty_mins_upcom (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_thirty_mins;
@@ -314,7 +314,7 @@ CREATE TABLE historical_stock_data_thirty_mins (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_hour_hose;
@@ -326,7 +326,7 @@ CREATE TABLE historical_stock_data_one_hour_hose (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_hour_hnx;
@@ -338,7 +338,7 @@ CREATE TABLE historical_stock_data_one_hour_hnx (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_hour_upcom;
@@ -350,7 +350,7 @@ CREATE TABLE historical_stock_data_one_hour_upcom (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_hour;
@@ -362,7 +362,7 @@ CREATE TABLE historical_stock_data_one_hour (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_day_hose;
@@ -374,7 +374,7 @@ CREATE TABLE historical_stock_data_one_day_hose (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_day_hnx;
@@ -386,7 +386,7 @@ CREATE TABLE historical_stock_data_one_day_hnx (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_day_upcom;
@@ -398,7 +398,7 @@ CREATE TABLE historical_stock_data_one_day_upcom (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_day;
@@ -410,53 +410,61 @@ CREATE TABLE historical_stock_data_one_day (
     low INTEGER,
     `close` INTEGER,
     volume BIGINT,
-    ticker VARCHAR(10)
+    ticker VARCHAR(20)
 );
+
+DROP TABLE IF EXISTS intraday_stock_data_hose;
 
 CREATE TABLE intraday_stock_data_hose (
-	symbol varchar(20),
-    trading_time datetime,
-    `open` integer,
-    high integer,
-    low integer,
-    `close` integer,
-    volume bigint
+    `time` DATETIME,
+    `open` INTEGER,
+    high INTEGER,
+    low INTEGER,
+    `close` INTEGER,
+    volume BIGINT,
+    ticker VARCHAR(20)
 );
+
+DROP TABLE IF EXISTS intraday_stock_data_hnx;
 
 CREATE TABLE intraday_stock_data_hnx(
-	symbol varchar(20),
-    trading_time datetime,
-    `open` integer,
-    high integer,
-    low integer,
-    `close` integer,
-    volume bigint
+    `time` DATETIME,
+    `open` INTEGER,
+    high INTEGER,
+    low INTEGER,
+    `close` INTEGER,
+    volume BIGINT,
+    ticker VARCHAR(20)
 );
+
+DROP TABLE IF EXISTS intraday_stock_data_upcom;
 
 CREATE TABLE intraday_stock_data_upcom (
-	symbol varchar(20),
-    trading_time datetime,
-    `open` integer,
-    high integer,
-    low integer,
-    `close` integer,
-    volume bigint
+    `time` DATETIME,
+    `open` INTEGER,
+    high INTEGER,
+    low INTEGER,
+    `close` INTEGER,
+    volume BIGINT,
+    ticker VARCHAR(20)
 );
 
+DROP TABLE IF EXISTS intraday_stock_data;
+
 CREATE TABLE intraday_stock_data (
-	symbol varchar(20),
-    trading_time datetime,
-    `open` integer,
-    high integer,
-    low integer,
-    `close` integer,
-    volume bigint
+    `time` DATETIME,
+    `open` INTEGER,
+    high INTEGER,
+    low INTEGER,
+    `close` INTEGER,
+    volume BIGINT,
+    ticker VARCHAR(20)
 );
 
 DROP TABLE IF EXISTS general_rating;
 
 CREATE TABLE general_rating (
-  ticker VARCHAR(255) PRIMARY KEY,
+  ticker VARCHAR(20) PRIMARY KEY,
   stock_rating FLOAT,
   valuation FLOAT,
   financial_health FLOAT,

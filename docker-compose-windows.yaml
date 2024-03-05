@@ -258,9 +258,6 @@ services:
     image: cassandra:latest
     container_name: cassandra-seed-1
     hostname: cassandra-seed-1
-    resources:
-      limits: 
-        memory: 1024M
     networks:
       - graduation-thesis
     ports:
@@ -273,14 +270,13 @@ services:
       - CASSANDRA_DC=DC1
       - CASSANDRA_RACK=RACK1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-  
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
+
   cassandra-seed-2:
     image: cassandra:latest
     container_name: cassandra-seed-2
     hostname: cassandra-seed-2
-    resources:
-      limits: 
-        memory: 1024M
     networks:
       - graduation-thesis
     ports:
@@ -293,14 +289,13 @@ services:
       - CASSANDRA_DC=DC2
       - CASSANDRA_RACK=RACK2
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
 
   cassandra-1:
     image: cassandra:latest
     container_name: cassandra-1
     hostname: cassandra-1
-    resources:
-      limits: 
-        memory: 1024M
     networks:
       - graduation-thesis
     depends_on:
@@ -316,14 +311,13 @@ services:
       - CASSANDRA_DC=DC1
       - CASSANDRA_RACK=RACK1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
 
   cassandra-2:
     image: cassandra:latest
     container_name: cassandra-2
     hostname: cassandra-2
-    resources:
-      limits: 
-        memory: 1024M
     networks:
       - graduation-thesis
     depends_on:
@@ -339,6 +333,8 @@ services:
       - CASSANDRA_DC=DC2
       - CASSANDRA_RACK=RACK2
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
 
   # Cấu hình Grafana container
   grafana:
