@@ -34,22 +34,17 @@ def run_spark_job():
     json_schema = StructType([
             StructField("RType", StringType(), True),
             StructField("TradingDate", StringType(), True),
+            StructField("Time", StringType(), True),
             StructField("Symbol", StringType(), True),
             StructField("Open", DoubleType(), True),
             StructField("High", DoubleType(), True),
             StructField("Low", DoubleType(), True),
-            StructField('Close', DoubleType(), True),
-            StructField('Volume', DoubleType(), True),
-            StructField('Value', DoubleType(), True)
+            StructField("Close", DoubleType(), True),
+            StructField("Volume", DoubleType(), True),
+            StructField("Value", DoubleType(), True)
         ])
 
     stock_df = json_df.withColumn("value", from_json(json_df["value"], json_schema)).select("value.*")
-
-    # print(stock_df)
-    #
-    # stock_df1 = stock_df.select("stock_data.*")
-    #
-    # print(stock_df1)
 
     # print the dataframe in console for debug purpose
     streaming_query = stock_df.writeStream \
@@ -65,18 +60,6 @@ def run_spark_job():
 
 
 def main():
-    data = {'DataType': 'B',
-            'Content': '{"RType":"B",'
-                       '"TradingDate":"05/03/2024",'
-                       '"Time":"14:45:00",'
-                       '"Symbol":"HPG",'
-                       '"Open":31150.0,'
-                       '"High":31150.0,'
-                       '"Low":31150.0,'
-                       '"Close":31150.0,'
-                       '"Volume":1473600.0,'
-                       '"Value":0.0}'}
-
     run_spark_job()
 
 

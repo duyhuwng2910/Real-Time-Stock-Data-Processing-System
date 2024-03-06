@@ -154,6 +154,7 @@ services:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka-broker-1:9093,kafka-broker-2:9094,kafka-broker-3:9095'
+      MAX_HEAP_SIZE: 1024M
 
   # Dịch vụ Control Center
   control-center:
@@ -176,6 +177,7 @@ services:
       CONTROL_CENTER_REPLICATION_FACTOR: 1
       CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      MAX_HEAP_SIZE: 1024M
 
   # Cấu hình Spark containers
   spark-master:
@@ -196,6 +198,7 @@ services:
     command: ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+
   spark-worker-1:
     image: bitnami/spark:latest
     container_name: spark-worker-1
@@ -219,6 +222,7 @@ services:
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      
   spark-worker-2:
     image: bitnami/spark:latest
     container_name: spark-worker-2

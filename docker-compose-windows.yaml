@@ -194,6 +194,8 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
     command: ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    volumes:
+      - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
 
   spark-worker-1:
     image: bitnami/spark:latest
@@ -216,6 +218,8 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    volumes:
+      - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
 
   spark-worker-2:
     image: bitnami/spark:latest
@@ -238,7 +242,9 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
-
+    volumes:
+      - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      
   # Cấu hình MySQL container
   mysql:
     image: mysql:8.0.36

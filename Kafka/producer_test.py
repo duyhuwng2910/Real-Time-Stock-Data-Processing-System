@@ -25,11 +25,13 @@ ticker_list = ['VIC', 'VHM', 'VRE', 'MSN', 'SSI', 'TCB', 'VCB', 'BID', 'HPG', 'G
 # get market data message
 def get_market_data(message):
     print(message['Content'])
-
-    kafka_message = producer.send('demo', message)
+    
+    trading_info = message['Content']
+    
+    kafka_message = producer.send('demo', trading_info)
 
     # Chờ phản hồi
-    record_metadata = kafka_message.get()
+    record_metadata = kafka_message.get(5)
 
     # Kiểm tra phản hồi
     if record_metadata.topic == 'demo':
