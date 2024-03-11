@@ -1,5 +1,5 @@
-from ssi_fc_data import fc_md_client
-import datetime
+import threading
+import json
 import sys
 
 # Uncomment if you use Windows
@@ -9,48 +9,51 @@ import sys
 sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
 
 import config
+from ssi_fc_data.fc_md_stream import MarketDataStream
+from ssi_fc_data.fc_md_client import MarketDataClient
 
-client = fc_md_client.MarketDataClient(config)
+from kafka import KafkaProducer
+
+bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
+
+producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
+                         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
 
-def get_latest_trading_date():
-    """
-        Function to return the latest trading date, according the time running this function
-    """
-    today = datetime.date.today()
+# get market data message
+def get_market_data(message):
+    trading_info = message['Content']
 
-    weekday = today.weekday()
+    print(trading_info)
 
-    # Nếu là thứ Bảy hoặc Chủ Nhật, trả về ngày thứ Sáu của tuần đó
-    if weekday == 5:
-        return today - datetime.timedelta(days=1)
-    elif weekday == 6:
-        return today - datetime.timedelta(days=2)
+    kafka_message = producer.send('demo', trading_info)
+
+    # Chờ phản hồi
+    record_metadata = kafka_message.get(5)
+
+    # Kiểm tra phản hồi
+    if record_metadata.topic == 'demo':
+        print("Dữ liệu đã được gửi thành công lên topic")
     else:
-        now = datetime.datetime.now()
+        print("Lỗi: Dữ liệu không được gửi")
 
-        if now.hour >= 15 and now.minute >= 30:
-            return today
-        else:
-            if weekday == 0:
-                return today - datetime.timedelta(days=3)
-            else:
-                return today - datetime.timedelta(days=1)
+    data_dict = json.loads(trading_info)
+
+    print(type(data_dict))
 
 
-ld = get_latest_trading_date()
+# get error
+def get_error(error):
+    print(error)
 
-print(ld)
 
-# df = pd.read_excel('W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx', sheet_name='Stock')
-#
-# hose_df = df.loc[df['exchange'] == 'HOSE']
-#
-# ticker_df = hose_df['ticker']
-#
-# for ticker in ticker_df:
-#     json_data = client.intraday_ohlc(config, model.intraday_ohlc(ticker, ld, ld, 1, 300, True, 1))
-#
-#     print(json_data)
-#
-#     time.sleep(1)
+def main():
+    stream = MarketDataStream(config, MarketDataClient(config))
+
+    stream.start(get_market_data, get_error, 'B:VIC')
+
+    while True:
+        pass
+
+
+main()

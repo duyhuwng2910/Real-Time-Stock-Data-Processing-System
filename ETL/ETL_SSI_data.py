@@ -22,12 +22,12 @@ import config
 connection = mysql.connector.connect(user='root',
                                      password='root',
                                      host='localhost',
-                                     database='demo')
+                                     database='vietnam_stock')
 
 cursor = connection.cursor()
 
 # Create a SQLAlchemy engine to connect to the MySQL database
-engine = create_engine("mysql+mysqlconnector://root:root@localhost/demo")
+engine = create_engine("mysql+mysqlconnector://root:root@localhost/vietnam_stock")
 
 # Create SSI client
 client = fc_md_client.MarketDataClient(config)
@@ -43,31 +43,48 @@ def extract_daily_ohlcv_data(df: pd.DataFrame):
 
     exchange = df.iloc[0, df.columns.get_loc('exchange')].lower()
 
-    df_name = exchange + '_df'
+    exchange_name = exchange.upper()
+
+    columns = ['time', 'open', 'high', 'low', 'close', 'volume', 'ticker']
+
+    dtypes = {
+        'time': 'object',
+        'open': 'int64',
+        'high': 'int64',
+        'low': 'int64',
+        'close': 'int64',
+        'volume': 'int64',
+        'ticker': 'object'
+    }
+
+    exchange_df = pd.DataFrame(columns=columns)
+
+    # Set data types for the columns
+    for column, dtype in dtypes.items():
+        exchange_df[column] = exchange_df[column].astype(dtype)
 
     for ticker in ticker_df:
         start_date = df.loc[df['ticker'] == ticker].iloc[0]['first_trading_date']
 
         try:
-            stock_historical_data = vnstock_data.stock_historical_data(symbol=ticker,
-                                                                       start_date=start_date,
-                                                                       end_date=str(datetime.date.today()),
-                                                                       resolution='1D',
-                                                                       type='stock',
-                                                                       beautify=True,
-                                                                       decor=False,
-                                                                       source='SSI')
+            historical_data = vnstock_data.stock_historical_data(symbol=ticker,
+                                                                 start_date=start_date,
+                                                                 end_date=str(datetime.date.today()),
+                                                                 resolution='1D',
+                                                                 type='stock',
+                                                                 beautify=True,
+                                                                 decor=False,
+                                                                 source='SSI')
 
-            stock_historical_data['time'] = pd.to_datetime(stock_historical_data['time'])
+            historical_data['time'] = pd.to_datetime(historical_data['time'])
 
             try:
-                stock_historical_data.to_sql(f'historical_stock_data_one_day_{exchange}', con=engine,
-                                             if_exists='append', index=False)
+                exchange_df = pd.concat([exchange_df, historical_data])
 
-                print(f"Insert stock historical data of symbol {ticker} completely!")
+                print(f"Inserting data of symbol {ticker}")
 
             except Exception as e:
-                print(f"Error here:{e}")
+                print(f"Error while concat data frame:{e}")
 
         except KeyError:
             print(f"Key error with {ticker}")
@@ -82,7 +99,18 @@ def extract_daily_ohlcv_data(df: pd.DataFrame):
 
             continue
 
-    print(f"Insert stock historical data of data frame {df_name} completely!")
+    try:
+        exchange_df.to_sql(f'historical_stock_data_one_day_{exchange_name}',
+                           con=engine,
+                           if_exists='append',
+                           index=False)
+
+        print(f"Insert historical stock data of exchange {exchange_name} completely!")
+
+    except Exception as e:
+        print(f"Error here:{e}")
+
+    time.sleep(5)
 
     current_dir = os.getcwd()
 
@@ -105,14 +133,46 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
     """
         Function to get stock historical data of all of Vietnam Stock Market
     """
-    print("Starting extracting stock historical data...")
+    print("Starting extracting historical stock data...")
 
     # If you run the first time, please uncomment this below line to run.
     # After running first time, you can comment this line
     cursor.execute('''
-                   DELETE FROM historical_stock_data_one_day_hose;
-                   DELETE FROM historical_stock_data_one_day_hnx;
-                   DELETE FROM historical_stock_data_one_day_upcom;
+                    DROP TABLE IF EXISTS historical_stock_data_one_day_hose;
+                    
+                    CREATE TABLE historical_stock_data_one_day_hose (
+                        `time` DATETIME,
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT,
+                        ticker VARCHAR(20)
+                    );
+                    
+                    DROP TABLE IF EXISTS historical_stock_data_one_day_hnx;
+                    
+                    CREATE TABLE historical_stock_data_one_day_hnx (
+                        `time` DATETIME,
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT,
+                        ticker VARCHAR(20)
+                    );
+                    
+                    DROP TABLE IF EXISTS historical_stock_data_one_day_upcom;
+                    
+                    CREATE TABLE historical_stock_data_one_day_upcom (
+                        `time` DATETIME,
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT,
+                        ticker VARCHAR(20)
+                    );
                    ''')
 
     threads_list = []
@@ -127,7 +187,7 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
     for thread in threads_list:
         thread.join()
 
-    time.sleep(2)
+    time.sleep(5)
 
     print("Insert daily historical stock data of Vietnam Stock Market successfully!")
 
@@ -140,9 +200,7 @@ def extract_intraday_ohlcv_data(df: pd.DataFrame, trading_date: str):
 
     error_df = pd.DataFrame({'ticker': []})
 
-    exchange = df.iloc[0, df.columns.get_loc('exchange')].lower()
-
-    df_name = exchange.upper()
+    exchange = df.iloc[0, df.columns.get_loc('exchange')]
 
     columns = ['time', 'open', 'high', 'low', 'close', 'volume', 'ticker']
 
@@ -189,11 +247,13 @@ def extract_intraday_ohlcv_data(df: pd.DataFrame, trading_date: str):
             continue
 
     try:
-        exchange_df.to_sql(f'intraday_stock_data_{exchange}', con=engine, if_exists='append', index=False)
+        exchange_df.to_sql('intraday_stock_data', con=engine, if_exists='append', index=False)
 
-        print(f"Insert intraday stock data of data frame {df_name} completely!")
+        print(f"Insert intraday stock data of exchange {exchange} completely!")
     except Exception as e:
         print(f"Error while inserting data: {e}")
+
+    time.sleep(5)
 
     current_dir = os.getcwd()
 
@@ -242,9 +302,17 @@ def extract_intraday_stock_data(exchange_list: list):
     latest_trading_date = get_latest_trading_date()
 
     cursor.execute('''
-                   DELETE FROM intraday_stock_data_hose;
-                   DELETE FROM intraday_stock_data_hnx;
-                   DELETE FROM intraday_stock_data_upcom;
+                    DROP TABLE IF EXISTS intraday_stock_data;
+                    
+                    CREATE TABLE intraday_stock_data (
+                        `time` DATETIME,
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT,
+                        ticker VARCHAR(20)
+                    );
                    ''')
 
     threads_list = []
@@ -259,7 +327,7 @@ def extract_intraday_stock_data(exchange_list: list):
     for thread in threads_list:
         thread.join()
 
-    time.sleep(2)
+    time.sleep(5)
 
     print("Insert intraday stock data of Vietnam Stock Market successfully!")
 
@@ -283,9 +351,18 @@ def main():
 
     exchange_df_list = [hose_df, hnx_df, upcom_df]
 
+    '''
+        If running first time, uncomment these lines to get the historical stock data
+    '''
     # extract_daily_historical_stock_data(exchange_df_list)
+    #
+    # time.sleep(10)
 
     extract_intraday_stock_data(exchange_df_list)
+
+    cursor.close()
+
+    connection.close()
 
 
 main()

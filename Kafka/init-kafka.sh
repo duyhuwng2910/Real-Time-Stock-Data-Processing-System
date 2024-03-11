@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e
 
-/opt/bitnami/scripts/kafka/entrypoint.sh /opt/bitnami/scripts/kafka/run.sh &
+/opt/kafka/entrypoint.sh /opt/bitnami/scripts/kafka/run.sh &
 
 echo "Waiting for Kafka to be set up..."
 sleep 10
 
-kafka-topics.sh --create --topic hose --bootstrap-server localhost:9092 --partitions 5 --replication-factor 4
+kafka-topics --create --topic hose --bootstrap-server kafka-controller-1:9092 --replication-factor 2 --partitions 2
 
-kafka-topics.sh --create --topic hnx --bootstrap-server localhost:9092 --partitions 5 --replication-factor 4
+kafka-topics --create --topic hose --bootstrap-server kafka-controller-1:9092 --replication-factor 2 --partitions 2
 
-kafka-topics.sh --create --topic upcom --bootstrap-server localhost:9092 --partitions 5 --replication-factor 4
+kafka-topics --create --topic hose --bootstrap-server kafka-controller-1:9092 --replication-factor 2 --partitions 2
 
 wait

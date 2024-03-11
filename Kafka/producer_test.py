@@ -24,11 +24,13 @@ ticker_list = ['VIC', 'VHM', 'VRE', 'MSN', 'SSI', 'TCB', 'VCB', 'BID', 'HPG', 'G
 
 # get market data message
 def get_market_data(message):
-    print(message['Content'])
-    
     trading_info = message['Content']
-    
-    kafka_message = producer.send('demo', trading_info)
+
+    data = json.loads(trading_info)
+
+    print(data)
+
+    kafka_message = producer.send('demo', data)
 
     # Chờ phản hồi
     record_metadata = kafka_message.get(5)

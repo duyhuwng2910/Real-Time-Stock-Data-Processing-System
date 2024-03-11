@@ -9,12 +9,12 @@ from sqlalchemy import create_engine, types
 connection = mysql.connector.connect(user='root',
                                      password='root',
                                      host='localhost',
-                                     database='demo')
+                                     database='vietnam_stock')
 
 cursor = connection.cursor()
 
 # Create a SQLAlchemy engine to connect to the MySQL database
-engine = create_engine("mysql+mysqlconnector://root:root@localhost/demo")
+engine = create_engine("mysql+mysqlconnector://root:root@localhost/vietnam_stock")
 
 
 def extract_companies_list_default_data():
@@ -330,9 +330,9 @@ def extract_general_rating_data(df: pd.DataFrame):
 
 
 def main():
-    # cld_df = extract_companies_list_default_data()
+    cld_df = extract_companies_list_default_data()
 
-    # cll_df = extract_companies_list_live_data()
+    cll_df = extract_companies_list_live_data()
 
     # extract_companies_overview_data(cll_df)
 

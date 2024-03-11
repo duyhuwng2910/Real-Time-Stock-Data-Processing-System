@@ -1,5 +1,6 @@
 import json
 import time
+import random
 
 from kafka import KafkaProducer
 
@@ -8,9 +9,9 @@ bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                          value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
-data = {"RType":"B","TradingDate":"05/03/2024","Time":"14:45:00","Symbol":"HPG","Open":31150.0,"High":31150.0,"Low":31150.0,"Close":31150.0,"Volume":1473600.0,"Value":0.0}
+data = {'RType': 'B', 'TradingDate': '08/03/2024', 'Time': '14:45:02', 'Symbol': 'VPB', 'Open': 19000.0, 'High': 19000.0, 'Low': 19000.0, 'Close': 19000.0, 'Volume': 1124000.0, 'Value': 0.0}
 
-for i in range(100):
+for i in range(50):
     kafka_message = producer.send('demo', data)
 
     # Chờ phản hồi
@@ -22,4 +23,4 @@ for i in range(100):
     else:
         print("Lỗi: Dữ liệu không được gửi")
 
-    time.sleep(2)
+    time.sleep(random.random())

@@ -81,6 +81,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'BROKER'
       KAFKA_LOG_DIRS: '/tmp/kraft-logs'
       CLUSTER_ID: 'nguyeexnduyhuwng291002'
+      MAX_HEAP_SIZE: 1024M
 
   kafka-broker-2:
     image: confluentinc/cp-server:latest
@@ -108,6 +109,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'BROKER'
       KAFKA_LOG_DIRS: '/tmp/kraft-logs'
       CLUSTER_ID: 'nguyeexnduyhuwng291002'
+      MAX_HEAP_SIZE: 1024M
 
   kafka-broker-3:
     image: confluentinc/cp-server:latest
@@ -135,6 +137,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'BROKER'
       KAFKA_LOG_DIRS: '/tmp/kraft-logs'
       CLUSTER_ID: 'nguyeexnduyhuwng291002'
+      MAX_HEAP_SIZE: 1024M
 
   # Dịch vụ Schema Registry
   schema-registry:
@@ -222,7 +225,7 @@ services:
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
-      
+
   spark-worker-2:
     image: bitnami/spark:latest
     container_name: spark-worker-2
@@ -257,70 +260,31 @@ services:
       - '3306:3306'
     volumes:
       - mysql_data:/var/lib/mysql
+    command: --max_allowed_packet=268425456
     environment:
-      - MYSQL_DATABASE=demo
+      - MYSQL_DATABASE=vietnam_stock
       - MYSQL_ROOT_PASSWORD=root
 
   # Cấu hình cụm Cassandra
-  cassandra-seed-1:
-    image: cassandra:latest
-    container_name: cassandra-seed-1
-    hostname: cassandra-seed-1
-    networks:
-      - graduation-thesis
-    ports:
-      - '9042:9042'
-    volumes:
-      - cassandra_seed_1:/var/lib/cassandra
-    environment:
-      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
-      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
-      - CASSANDRA_DC=DC1
-      - CASSANDRA_RACK=RACK1
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - HEAP_NEWSIZE=128M
-      - MAX_HEAP_SIZE=1024M
-
-  cassandra-seed-2:
-    image: cassandra:latest
-    container_name: cassandra-seed-2
-    hostname: cassandra-seed-2
-    networks:
-      - graduation-thesis
-    ports:
-      - '9043:9042'
-    volumes:
-      - cassandra_seed_2:/var/lib/cassandra
-    environment:
-      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
-      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
-      - CASSANDRA_DC=DC2
-      - CASSANDRA_RACK=RACK2
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - HEAP_NEWSIZE=128M
-      - MAX_HEAP_SIZE=1024M
-
   cassandra-1:
     image: cassandra:latest
     container_name: cassandra-1
     hostname: cassandra-1
     networks:
       - graduation-thesis
-    depends_on:
-      - cassandra-seed-1
-      - cassandra-seed-2
     ports:
-      - '9044:9042'
+      - '9042:9042'
     volumes:
       - cassandra_1:/var/lib/cassandra
     environment:
-      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
+      - CASSANDRA_SEEDS=cassandra-1,cassandra-2,cassandra-3
       - CASSANDRA_CLUSTER_NAME=cassandra-cluster
       - CASSANDRA_DC=DC1
       - CASSANDRA_RACK=RACK1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
       - HEAP_NEWSIZE=128M
       - MAX_HEAP_SIZE=1024M
+      - CLIENT_TIMEOUT=20
 
   cassandra-2:
     image: cassandra:latest
@@ -329,20 +293,43 @@ services:
     networks:
       - graduation-thesis
     depends_on:
-      - cassandra-seed-1
-      - cassandra-seed-2
+      - cassandra-1
     ports:
-      - '9045:9042'
+      - '9043:9042'
     volumes:
       - cassandra_2:/var/lib/cassandra
     environment:
-      - CASSANDRA_SEEDS=cassandra-seed-1,cassandra-seed-2
+      - CASSANDRA_SEEDS=cassandra-1,cassandra-2,cassandra-3
       - CASSANDRA_CLUSTER_NAME=cassandra-cluster
-      - CASSANDRA_DC=DC2
-      - CASSANDRA_RACK=RACK2
+      - CASSANDRA_DC=DC1
+      - CASSANDRA_RACK=RACK1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
       - HEAP_NEWSIZE=128M
       - MAX_HEAP_SIZE=1024M
+      - CLIENT_TIMEOUT=20
+
+  cassandra-3:
+    image: cassandra:latest
+    container_name: cassandra-3
+    hostname: cassandra-3
+    networks:
+      - graduation-thesis
+    depends_on:
+      - cassandra-1
+      - cassandra-2
+    ports:
+      - '9044:9042'
+    volumes:
+      - cassandra_3:/var/lib/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-1,cassandra-2,cassandra-3
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_DC=DC2
+      - CASSANDRA_RACK=RACK1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=1024M
+      - CLIENT_TIMEOUT=20
 
   # Cấu hình Grafana container
   grafana:
@@ -352,10 +339,20 @@ services:
       - graduation-thesis
     ports:
       - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./packages/hadesarchitect-cassandra-datasource-3.0.0.zip:/var/lib/grafana/plugins/cassandra-plugin.zip
+    environment:
+      - GF_LOG_LEVEL=debug
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_DEFAULT_APP_MODE=development
+    command: ["/bin/bash", "-c", "unzip /var/lib/grafana/plugins/cassandra-plugin.zip"]
 
 volumes:
   mysql_data:
-  cassandra_seed_1:
-  cassandra_seed_2:
   cassandra_1:
   cassandra_2:
+  cassandra_3:
+  grafana_data:
