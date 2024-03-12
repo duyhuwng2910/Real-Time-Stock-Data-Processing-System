@@ -12,10 +12,10 @@ from ssi_fc_data import fc_md_client, model
 import sys
 
 # Uncomment if you use Windows
-# sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
 
 # Uncomment if you use Ubuntu
-sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
+# sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
 
 import config
 
@@ -100,7 +100,7 @@ def extract_daily_ohlcv_data(df: pd.DataFrame):
             continue
 
     try:
-        exchange_df.to_sql(f'historical_stock_data_one_day_{exchange_name}',
+        exchange_df.to_sql(f'historical_stock_data_one_day_{exchange}',
                            con=engine,
                            if_exists='append',
                            index=False)
@@ -115,14 +115,14 @@ def extract_daily_ohlcv_data(df: pd.DataFrame):
     current_dir = os.getcwd()
 
     # Uncomment if using Windows
-    # error_csv_file_path = os.path.join(current_dir,
-    #                                    'Excel files',
-    #                                    f'Error files\historical_stock_data_{exchange}_{datetime.date.today()}.csv')
-
-    # Uncomment if using Ubuntu
     error_csv_file_path = os.path.join(current_dir,
                                        'Excel files',
-                                       f'Error files/historical_stock_data_{exchange}_{datetime.date.today()}.csv')
+                                       f'Error files\historical_stock_data_{exchange_name}_{datetime.date.today()}.csv')
+
+    # Uncomment if using Ubuntu
+    # error_csv_file_path = os.path.join(current_dir,
+    #                                    'Excel files',
+    #                                    f'Error files/historical_stock_data_{exchange_name}_{datetime.date.today()}.csv')
 
     error_df.to_csv(error_csv_file_path)
 
@@ -258,10 +258,10 @@ def extract_intraday_ohlcv_data(df: pd.DataFrame, trading_date: str):
     current_dir = os.getcwd()
 
     # Uncomment if using Ubuntu
-    error_csv_file_path = os.path.join(current_dir, 'Excel files', f'Error files/intraday_stock_data_{exchange}.csv')
+    # error_csv_file_path = os.path.join(current_dir, 'Excel files', f'Error files/intraday_stock_data_{exchange}.csv')
 
     # Uncomment if using Windows
-    # error_csv_file_path = os.path.join(current_dir, 'Excel files', f'Error files\intraday_stock_data_{exchange}.csv')
+    error_csv_file_path = os.path.join(current_dir, 'Excel files', f'Error files\intraday_stock_data_{exchange}.csv')
 
     error_df.to_csv(error_csv_file_path)
 
@@ -334,12 +334,12 @@ def extract_intraday_stock_data(exchange_list: list):
 
 def main():
     # Uncomment the below line if you use Ubuntu
-    df = pd.read_excel('/home/nguyenduyhung/graduation_thesis/project/Excel files/vn_stock.xlsx', sheet_name='Stock')
+    # df = pd.read_excel('/home/nguyenduyhung/graduation_thesis/project/Excel files/vn_stock.xlsx', sheet_name='Stock')
 
     # Uncomment the below line if you use Windows
-    # df = pd.read_excel(
-    #     'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',
-    #     sheet_name='Stock')
+    df = pd.read_excel(
+        'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',
+        sheet_name='Stock')
 
     df['first_trading_date'] = df['first_trading_date'].dt.strftime('%Y-%m-%d')
 
@@ -355,7 +355,7 @@ def main():
         If running first time, uncomment these lines to get the historical stock data
     '''
     # extract_daily_historical_stock_data(exchange_df_list)
-    #
+    
     # time.sleep(10)
 
     extract_intraday_stock_data(exchange_df_list)

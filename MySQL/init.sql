@@ -209,40 +209,16 @@ CREATE TABLE intraday_stock_data (
     ticker VARCHAR(20)
 );
 
-DROP TABLE IF EXISTS intraday_stock_data_hose;
+DROP TABLE IF EXISTS real_time_stock_trading_data;
 
-CREATE TABLE intraday_stock_data_hose (
-    `time` DATETIME,
-    `open` INTEGER,
-    high INTEGER,
-    low INTEGER,
-    `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
-);
-
-DROP TABLE IF EXISTS intraday_stock_data_hnx;
-
-CREATE TABLE intraday_stock_data_hnx (
-    `time` DATETIME,
-    `open` INTEGER,
-    high INTEGER,
-    low INTEGER,
-    `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
-);
-
-DROP TABLE IF EXISTS intraday_stock_data_upcom;
-
-CREATE TABLE intraday_stock_data_upcom (
-    `time` DATETIME,
-    `open` INTEGER,
-    high INTEGER,
-    low INTEGER,
-    `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+CREATE TABLE real_time_stock_trading_data (
+    trading_time DATETIME,
+    ticker VARCHAR(20),
+    `open` int,
+    high int,
+    low int,
+    `close` int,
+    volume int
 );
 
 DROP TABLE IF EXISTS general_rating;
