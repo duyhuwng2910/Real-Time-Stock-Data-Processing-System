@@ -1,4 +1,8 @@
 import datetime
+import threading
+import time
+import os
+import random
 
 import pandas as pd
 import vnstock
@@ -57,8 +61,6 @@ def extract_companies_list_default_data():
             
         print("Insert default companies list data completely!")
     
-        return df
-    
     except mysql.connector.Error as err:
         print("Error while inserting row:", err)
 
@@ -111,8 +113,6 @@ def extract_companies_list_default_data():
 
     #     print("Insert default companies list data completely!")
 
-    #     return df
-
     # except Exception as e:
     #     print(f"Error here:{e}")
 
@@ -147,16 +147,19 @@ def extract_companies_list_live_data():
 
         print("Insert live companies list completely!")
 
-        return df
-
     except Exception as e:
         print(f"Error here:{e}")
 
 
 def extract_companies_overview_data(df: pd.DataFrame):
-    print("Starting extracting companies overview data...")
-
+    """
+        Function to get companies overview data of all Vietnam Stock Market
+    """
+    print("Starting to extract companies overview...")
+    
     ticker_df = df['ticker']
+    
+    error_df = pd.DataFrame({'ticker': []})
 
     structure = {
         "ticker": pd.Series([], dtype="object"),
@@ -191,14 +194,15 @@ def extract_companies_overview_data(df: pd.DataFrame):
 
             co_df = pd.concat([co_df, company_overview])
 
-            print(ticker)
+            print(f"Inserting data of {ticker}")
+        
         except Exception as e:
             error_df.loc[len(error_df), 'ticker'] = ticker
 
             print(f"Error while ingesting {ticker} data:{e}")
 
             continue
-
+        
     co_df.rename(columns={
         'exchange': 'exchange_name',
         'companyType': 'company_type',
@@ -220,10 +224,13 @@ def extract_companies_overview_data(df: pd.DataFrame):
         inplace=True)
 
     try:
-        co_df.to_sql('companies_overview', con=engine, if_exists='append', index=False,
+        co_df.to_sql('companies_overview',
+                     con=engine,
+                     if_exists='replace',
+                     index=False,
                      index_label='ticker',
                      dtype={
-                        'ticker': types.VARCHAR(255),
+                        'ticker': types.VARCHAR(20),
                         'exchange_name': types.VARCHAR(255),
                         'industry': types.VARCHAR(255),
                         'company_type': types.VARCHAR(255),
@@ -242,26 +249,43 @@ def extract_companies_overview_data(df: pd.DataFrame):
                         'industry_id': types.INT,
                         'industry_id_v2': types.VARCHAR(255),
                         'website': types.VARCHAR(255)
-                     })
-
-        print("Insert companies overview data completely!")
-
+                        }
+                    )
+        
+        print("Insert companies overview data of Vietnam Stock Market successfully!")
+        
     except Exception as e:
-        print(f"Error here:{e}")
+        print(f"Error while inserting data into table:{e}")
+        
+    time.sleep(5)
 
-    try:
-        error_df.to_csv(f'error_companies_overview_list_{datetime.datetime.today()}.csv')
+    current_dir = os.getcwd()
 
-        print("export sucessfully!")
-    except Exception as e:
-        print(f"Error here:{e}")
+    # Uncomment if using Windows
+    error_csv_file_path = os.path.join(current_dir,
+                                       'Excel files',
+                                       f'Error files\error_companies_overview_list.csv')
+
+    # Uncomment if using Ubuntu
+    # error_csv_file_path = os.path.join(current_dir,
+    #                                    'Excel files',
+    #                                    f'Error files/historical_stock_data_{exchange_name}_{datetime.date.today()}.csv')
+
+    error_df.to_csv(error_csv_file_path)
+
+    print("Update error symbols list file successfully!")
 
 
 def extract_general_rating_data(df: pd.DataFrame):
-    print("Starting extracting general rating data...")
-
+    """
+        Function to get general rating data of all Vietnam Stock Market
+    """
+    print("Starting to extract general rating data...")
+    
     ticker_df = df['ticker']
 
+    error_df = pd.DataFrame({'ticker': []})
+    
     columns = ['stockRating', 'valuation', 'financialHealth', 'businessModel',
                'businessOperation', 'rsRating', 'taScore', 'ticker', 'highestPrice',
                'lowestPrice', 'priceChange3m', 'priceChange1y', 'beta', 'alpha']
@@ -294,11 +318,15 @@ def extract_general_rating_data(df: pd.DataFrame):
         try:
             general_rating = vnstock.general_rating(ticker)
 
-            print(ticker)
-
             gr_df = pd.concat([gr_df, general_rating])
 
-        except KeyError:
+            print(f"Inserting general rating data of {ticker}")
+
+        except Exception as e:
+            error_df.loc[len(error_df), 'ticker'] = ticker
+
+            print(f"Error while ingesting {ticker} data:{e}")
+
             continue
 
     gr_df = gr_df[['ticker', 'stockRating', 'valuation', 'financialHealth', 'businessModel',
@@ -320,23 +348,72 @@ def extract_general_rating_data(df: pd.DataFrame):
         inplace=True)
 
     try:
-        gr_df.to_sql('general_rating', con=engine, if_exists='replace', index=False,
-                     index_label='ticker')
+        gr_df.to_sql('general_rating',
+                     con=engine,
+                     if_exists='replace',
+                     index=False,
+                     index_label='ticker',
+                     dtype={
+                            'ticker': types.VARCHAR(20),
+                            'stock_rating': types.FLOAT,
+                            'valuation': types.FLOAT,
+                            'financial_health': types.FLOAT,
+                            'business_model': types.FLOAT,
+                            'business_operation': types.FLOAT,
+                            'rs_rating': types.FLOAT,
+                            'ta_score': types.FLOAT,
+                            'highest_price': types.FLOAT,
+                            'lowest_price': types.FLOAT,
+                            'price_change_3m': types.FLOAT,
+                            'price_change_1y': types.FLOAT,
+                            'beta': types.FLOAT,
+                            'alpha': types.FLOAT
+                     })
 
-        print("Insert general rating data completely!")
+        print("Insert general rating data of Vietnam Stock Market successfully!")
 
     except Exception as e:
-        print(f"Error here:{e}")
+        print(f"Error while inserting data: {e}")
+
+    time.sleep(5)
+
+    current_dir = os.getcwd()
+
+    # Uncomment if using Ubuntu
+    # error_csv_file_path = os.path.join(current_dir, 'Excel files', f'Error files/general_rating_data_{exchange}.csv')
+
+    # Uncomment if using Windows
+    error_csv_file_path = os.path.join(current_dir, 'Excel files', f'Error files\general_rating_data.csv')
+
+    error_df.to_csv(error_csv_file_path)
+
+    print("Update error symbols list file successfully!")
 
 
 def main():
-    cld_df = extract_companies_list_default_data()
+    # Uncomment the below line if you use Ubuntu
+    # df = pd.read_excel('/home/nguyenduyhung/graduation_thesis/project/Excel files/vn_stock.xlsx', sheet_name='Stock')
 
-    cll_df = extract_companies_list_live_data()
+    # Uncomment the below line if you use Windows
+    df = pd.read_excel(
+        'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',
+        sheet_name='Stock')
+    
+    extract_companies_list_default_data()
 
-    # extract_companies_overview_data(cll_df)
+    time.sleep(2)
+    
+    extract_companies_list_live_data()
 
-    # extract_general_rating_data(cll_df)
+    time.sleep(2)
+    
+    extract_companies_overview_data(df)
+
+    time.sleep(2)
+    
+    extract_general_rating_data(df)
+    
+    cursor.close()
 
     connection.commit()
 

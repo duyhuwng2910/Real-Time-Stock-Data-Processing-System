@@ -4,32 +4,37 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
+
 kafka_topic_name = "hose"
-kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094,kafka-broker-3:9095"
+kafka_bootstrap_servers = "kafka-broker-1:9093"
 
-# Create Spark Session
-spark_conn = SparkSession.builder \
-    .appName("Real Time Stock Data Processing Project") \
-    .config("spark.cassandra.connection.host", "cassandra-1") \
-    .config("spark.cassandra.connection.port", "9042") \
-    .master("local[*]") \
-    .getOrCreate()
+jdbc_url = "jdbc:mysql://mysql:3306/vietnam_stock"
 
-spark_conn.sparkContext.setLogLevel("ERROR")
+db_credentials = {
+    "user": "root",
+    "password": "root",
+    "driver": "com.mysql.cj.jdbc.Driver"
+}
 
-
-def write_to_cassandra(df, epochId):
-    try:
-        df.write \
-            .format("org.apache.spark.sql.cassandra") \
-            .options(table="real_time_stock_trading_data", keyspace="vietnam_stock") \
-            .mode("append") \
-            .save()
-    except Exception as e:
-        print(f"Error while writing to Cassandra:{e}")
+def write_to_mysql(df, epoc_id):
+    df.write \
+        .jdbc(url=jdbc_url,
+              table="real_time_stock_trading_data",
+              mode="append",
+              properties=db_credentials)
 
 
-def run_spark_job():
+if __name__ == "__main__":
+    # Create Spark Session
+    spark_conn = SparkSession.builder.appName("Real Time Stock Data Processing Demo") \
+        .master("local[*]") \
+        .config('spark.jars.packages', 'com.mysql:mysql-connector-j:8.3.0,org.apache.spark:spark-streaming-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.0') \
+        .getOrCreate()
+
+    spark_conn.sparkContext.setLogLevel("ERROR")
+
+    # Construct a streaming DataFrame to connect Spark Structured Streaming
+    # with Kafka topic to read Data Streams
     df = spark_conn \
         .readStream \
         .format("kafka") \
@@ -88,19 +93,12 @@ def run_spark_job():
 
     stock_df2 = stock_df1.select('id', 'trading_time', 'ticker', 'open', 'high', 'low', 'close', 'volume')
 
-    cassandra_table = stock_df2.writeStream \
-        .trigger(processingTime="3 seconds") \
+    query = stock_df2.writeStream \
+        .foreachBatch(write_to_mysql) \
+        .trigger(processingTime="5 seconds") \
         .outputMode("append") \
-        .foreachBatch(write_to_cassandra) \
         .start()
 
-    cassandra_table.awaitTermination()
+    query.awaitTermination()
 
     print("Task completed!")
-
-
-def main():
-    run_spark_job()
-
-
-main()

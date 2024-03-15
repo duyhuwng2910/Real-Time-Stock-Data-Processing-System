@@ -1,48 +1,88 @@
 import threading
-
-from SSI import config
-from ssi_fc_data.fc_md_stream import MarketDataStream
-from ssi_fc_data.fc_md_client import MarketDataClient
-
+import pandas as pd
+import datetime
 import time
+import os
 
+import mysql.connector
+from sqlalchemy import create_engine, types
 
-def get_market_data(message: str):
-    print(message)
+import vnstock_data
+import vnstock
+from ssi_fc_data import fc_md_client, model
+import sys
 
+# Uncomment if you use Windows
+sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
 
-def get_error(error: str):
-    print(error)
+# Uncomment if you use Ubuntu
+# sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
 
+import config
 
-def streaming(streams: MarketDataStream, ticker: str):
-    ticker = 'B:' + ticker
+connection = mysql.connector.connect(user='root',
+                                     password='root',
+                                     host='localhost',
+                                     database='vietnam_stock')
 
-    streams.start(get_market_data, get_error, ticker)
+cursor = connection.cursor()
 
-    while True:
-        pass
+# Create a SQLAlchemy engine to connect to the MySQL database
+engine = create_engine("mysql+mysqlconnector://root:root@localhost/vietnam_stock")
 
+try:
+    company_overview = vnstock.company_overview('GAS')
 
-# stream = MarketDataStream(config, MarketDataClient(config))
+except Exception as e:
 
+    print(f"Error while ingesting data:{e}")
 
-def main():
-    ticker_list = ['ACB', 'BID', 'CTG', 'HDB', 'MBB', 'SHB', 'STB', 'TCB', 'TPB', 'VCB', 'VIB', 'VPB']
+company_overview.rename(columns={
+'exchange': 'exchange_name',
+'companyType': 'company_type',
+'noShareholders': 'number_of_shareholders',
+'foreignPercent': 'foreign_percent',
+'outstandingShare': 'outstanding_share',
+'issueShare': 'issue_share',
+'establishedYear': 'established_year',
+'noEmployees': 'number_of_employees',
+'stockRating': 'stock_rating',
+'deltaInWeek': 'delta_in_week',
+'deltaInMonth': 'delta_in_month',
+'deltaInYear': 'delta_in_year',
+'shortName': 'short_name',
+'industryEn': 'industry_en',
+'industryID': 'industry_id',
+'industryIDv2': 'industry_id_v2'
+},
+inplace=True)
 
-    thread_list = []
+try:
+    company_overview.to_sql('companies_overview', con=engine, if_exists='append', index=False,
+                    index_label='ticker',
+                    dtype={
+                    'ticker': types.VARCHAR(255),
+                    'exchange_name': types.VARCHAR(255),
+                    'industry': types.VARCHAR(255),
+                    'company_type': types.VARCHAR(255),
+                    'no_share_holders': types.BIGINT,
+                    'foreign_percent': types.FLOAT,
+                    'out_standing_share': types.FLOAT,
+                    'issue_share': types.FLOAT,
+                    'established_year': types.VARCHAR(255),
+                    'no_employees': types.BIGINT,
+                    'stock_rating': types.FLOAT,
+                    'delta_in_week': types.FLOAT,
+                    'delta_in_month': types.FLOAT,
+                    'delta_in_year': types.FLOAT,
+                    'short_name': types.VARCHAR(255),
+                    'industry_en': types.VARCHAR(255),
+                    'industry_id': types.INT,
+                    'industry_id_v2': types.VARCHAR(255),
+                    'website': types.VARCHAR(255)
+                    })
 
-    for ticker in ticker_list:
-        stream = MarketDataStream(config, MarketDataClient(config))
-        
-        thread = threading.Thread(target=streaming, args=(stream, ticker))
+    print(f"Insert companies overview data of completely!")
 
-        thread_list.append(thread)
-
-        thread.start()
-
-    for thread in thread_list:
-        thread.join()
-
-
-main()
+except Exception as e:
+    print(f"Error here:{e}")

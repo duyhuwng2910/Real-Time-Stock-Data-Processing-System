@@ -3,12 +3,13 @@ import json
 import sys
 
 # Uncomment if you use Windows
-# sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
 
 # Uncomment if you use Ubuntu
-sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
+# sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
 
 import config
+
 from ssi_fc_data.fc_md_stream import MarketDataStream
 from ssi_fc_data.fc_md_client import MarketDataClient
 
@@ -24,22 +25,9 @@ producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
 def get_market_data(message):
     trading_info = message['Content']
 
-    print(trading_info)
+    data = json.loads(trading_info)
 
-    kafka_message = producer.send('demo', trading_info)
-
-    # Chờ phản hồi
-    record_metadata = kafka_message.get(5)
-
-    # Kiểm tra phản hồi
-    if record_metadata.topic == 'demo':
-        print("Dữ liệu đã được gửi thành công lên topic")
-    else:
-        print("Lỗi: Dữ liệu không được gửi")
-
-    data_dict = json.loads(trading_info)
-
-    print(type(data_dict))
+    producer.send('hose', data)
 
 
 # get error
@@ -49,8 +37,12 @@ def get_error(error):
 
 def main():
     stream = MarketDataStream(config, MarketDataClient(config))
-
-    stream.start(get_market_data, get_error, 'B:VIC')
+    
+    # ticker = input("Please type the ticker you want to extract real time data:")
+    
+    ticker = 'B:BID-CTG-MBB-TCB-VCB'
+    
+    stream.start(get_market_data, get_error, ticker)
 
     while True:
         pass

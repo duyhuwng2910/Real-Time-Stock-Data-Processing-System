@@ -24,8 +24,6 @@ connection = mysql.connector.connect(user='root',
                                      host='localhost',
                                      database='vietnam_stock')
 
-cursor = connection.cursor()
-
 # Create a SQLAlchemy engine to connect to the MySQL database
 engine = create_engine("mysql+mysqlconnector://root:root@localhost/vietnam_stock")
 
@@ -134,12 +132,14 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
         Function to get stock historical data of all of Vietnam Stock Market
     """
     print("Starting extracting historical stock data...")
-
+    
+    cursor = connection.cursor()
+    
     # If you run the first time, please uncomment this below line to run.
     # After running first time, you can comment this line
     cursor.execute('''
                     DROP TABLE IF EXISTS historical_stock_data_one_day_hose;
-                    
+
                     CREATE TABLE historical_stock_data_one_day_hose (
                         `time` DATETIME,
                         `open` INTEGER,
@@ -149,9 +149,9 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
                         volume BIGINT,
                         ticker VARCHAR(20)
                     );
-                    
+
                     DROP TABLE IF EXISTS historical_stock_data_one_day_hnx;
-                    
+
                     CREATE TABLE historical_stock_data_one_day_hnx (
                         `time` DATETIME,
                         `open` INTEGER,
@@ -161,9 +161,9 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
                         volume BIGINT,
                         ticker VARCHAR(20)
                     );
-                    
+
                     DROP TABLE IF EXISTS historical_stock_data_one_day_upcom;
-                    
+
                     CREATE TABLE historical_stock_data_one_day_upcom (
                         `time` DATETIME,
                         `open` INTEGER,
@@ -174,7 +174,7 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
                         ticker VARCHAR(20)
                     );
                    ''')
-
+    
     threads_list = []
 
     for exchange_df in exchange_df_list:
@@ -186,7 +186,9 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
 
     for thread in threads_list:
         thread.join()
-
+    
+    cursor.close()
+    
     time.sleep(5)
 
     print("Insert daily historical stock data of Vietnam Stock Market successfully!")
@@ -250,6 +252,7 @@ def extract_intraday_ohlcv_data(df: pd.DataFrame, trading_date: str):
         exchange_df.to_sql('intraday_stock_data', con=engine, if_exists='append', index=False)
 
         print(f"Insert intraday stock data of exchange {exchange} completely!")
+    
     except Exception as e:
         print(f"Error while inserting data: {e}")
 
@@ -299,11 +302,13 @@ def extract_intraday_stock_data(exchange_list: list):
     """
     print("Starting extracting intraday stock data...")
 
+    cursor = connection.cursor()
+    
     latest_trading_date = get_latest_trading_date()
 
     cursor.execute('''
                     DROP TABLE IF EXISTS intraday_stock_data;
-                    
+
                     CREATE TABLE intraday_stock_data (
                         `time` DATETIME,
                         `open` INTEGER,
@@ -327,6 +332,8 @@ def extract_intraday_stock_data(exchange_list: list):
     for thread in threads_list:
         thread.join()
 
+    cursor.close()
+    
     time.sleep(5)
 
     print("Insert intraday stock data of Vietnam Stock Market successfully!")
@@ -351,16 +358,11 @@ def main():
 
     exchange_df_list = [hose_df, hnx_df, upcom_df]
 
-    '''
-        If running first time, uncomment these lines to get the historical stock data
-    '''
     # extract_daily_historical_stock_data(exchange_df_list)
     
-    # time.sleep(10)
+    # time.sleep(3)
 
     extract_intraday_stock_data(exchange_df_list)
-
-    cursor.close()
 
     connection.close()
 

@@ -1,7 +1,6 @@
 import threading
 import json
 import sys
-import asyncio
 import pandas as pd
 
 from ssi_fc_data.fc_md_stream import MarketDataStream
@@ -21,7 +20,7 @@ import config
 bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
-                         value_serializer=lambda x: json.dumps(x).encode('utf8'))
+                         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
 client = MarketDataClient(config)
 

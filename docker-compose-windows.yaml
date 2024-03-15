@@ -201,6 +201,7 @@ services:
     command: ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      - ./Spark/dev/test_consumer.py:/opt/bitnami/spark/test_consumer.py
 
   spark-worker-1:
     image: bitnami/spark:latest
@@ -225,6 +226,7 @@ services:
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      - ./Spark/dev/test_consumer.py:/opt/bitnami/spark/test_consumer.py
 
   spark-worker-2:
     image: bitnami/spark:latest
@@ -249,6 +251,7 @@ services:
     command: ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      - ./Spark/dev/test_consumer.py:/opt/bitnami/spark/test_consumer.py
 
   # Cấu hình MySQL container
   mysql:

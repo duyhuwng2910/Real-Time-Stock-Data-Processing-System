@@ -77,6 +77,25 @@ CREATE TABLE companies_overview (
     website VARCHAR(255)
 );
 
+DROP TABLE IF EXISTS general_rating;
+
+CREATE TABLE general_rating (
+  ticker VARCHAR(20) PRIMARY KEY,
+  stock_rating FLOAT,
+  valuation FLOAT,
+  financial_health FLOAT,
+  business_model FLOAT,
+  business_operation FLOAT,
+  rs_rating FLOAT,
+  ta_score FLOAT,
+  highest_price FLOAT,
+  lowest_price FLOAT,
+  price_change_3m FLOAT,
+  price_change_1y FLOAT,
+  beta FLOAT,
+  alpha FLOAT
+);
+
 DROP TABLE IF EXISTS historical_stock_data_one_min;
 
 CREATE TABLE historical_stock_data_one_min (
@@ -212,30 +231,12 @@ CREATE TABLE intraday_stock_data (
 DROP TABLE IF EXISTS real_time_stock_trading_data;
 
 CREATE TABLE real_time_stock_trading_data (
+    id BIGINT,
     trading_time DATETIME,
     ticker VARCHAR(20),
-    `open` int,
-    high int,
-    low int,
-    `close` int,
-    volume int
-);
-
-DROP TABLE IF EXISTS general_rating;
-
-CREATE TABLE general_rating (
-  ticker VARCHAR(20) PRIMARY KEY,
-  stock_rating FLOAT,
-  valuation FLOAT,
-  financial_health FLOAT,
-  business_model FLOAT,
-  business_operation FLOAT,
-  rs_rating FLOAT,
-  ta_score FLOAT,
-  highest_price FLOAT,
-  lowest_price FLOAT,
-  price_change_3m FLOAT,
-  price_change_1y FLOAT,
-  beta FLOAT,
-  alpha FLOAT
+    `open` INT,
+    high INT,
+    low INT,
+    `close` INT,
+    volume INT
 );
