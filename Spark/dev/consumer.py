@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
@@ -12,30 +13,35 @@ spark_conn = SparkSession.builder \
     .appName("Real Time Stock Data Processing Project") \
     .config("spark.cassandra.connection.host", "cassandra-1") \
     .config("spark.cassandra.connection.port", "9042") \
+    .config('spark.jars.packages', 'com.mysql:mysql-connector-j:8.3.0,org.apache.spark:spark-streaming-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.0') \
     .master("local[*]") \
     .getOrCreate()
 
 spark_conn.sparkContext.setLogLevel("ERROR")
 
 
-def write_to_cassandra(df, epochId):
+def write_to_aggregation_table(df, epoc_id):
     try:
         df.write \
             .format("org.apache.spark.sql.cassandra") \
-            .options(table="real_time_stock_trading_data", keyspace="vietnam_stock") \
+            .options(table="test", keyspace="vietnam_stock") \
             .mode("append") \
             .save()
+            
+        print("Ok")
     except Exception as e:
         print(f"Error while writing to Cassandra:{e}")
 
 
-def run_spark_job():
+if __name__ == "__main__":
+    # Construct a streaming DataFrame to connect Spark Structured Streaming
+    # with Kafka topic to read Data Streams
     df = spark_conn \
         .readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
         .option("subscribe", kafka_topic_name) \
-        .option("startingOffsets", "latest") \
+        .option("startingOffsets", "earliest") \
         .load()
 
     print("Schema of the dataframe: ")
@@ -74,9 +80,7 @@ def run_spark_job():
 
     stock_df1 = stock_df1.withColumn("trading_time", col("trading_time").cast(TimestampType()))
 
-    stock_df1 = stock_df1.withColumn("trading_time", date_format(stock_df1['trading_time'], "yyyy-MM-dd HH:mm:ss"))
-
-    stock_df1.printSchema()
+    # stock_df1 = stock_df1.withColumn("trading_time", date_format(stock_df1['trading_time'], "yyyy-MM-dd HH:mm:ss"))
 
     stock_df1 = stock_df1.withColumnRenamed("Symbol", "ticker") \
         .withColumnRenamed("Open", "open") \
@@ -85,22 +89,52 @@ def run_spark_job():
         .withColumnRenamed("Close", "close") \
         .withColumnRenamed("Volume", "volume") \
         .withColumnRenamed("offset", "id")
+    
+    time.sleep(1)
+    
+    print("Schema of stock data frame:")
+    
+    stock_df1.printSchema()
 
-    stock_df2 = stock_df1.select('id', 'trading_time', 'ticker', 'open', 'high', 'low', 'close', 'volume')
-
-    cassandra_table = stock_df2.writeStream \
-        .trigger(processingTime="5 seconds") \
-        .outputMode("append") \
-        .foreachBatch(write_to_cassandra) \
+    aggregation_df = stock_df1.withColumn("trading_time", date_format("trading_time", "yyyy-MM-dd HH:mm:00"))
+    
+    aggregation_df = aggregation_df.withColumn("trading_time", to_timestamp("trading_time", "yyyy-MM-dd HH:mm:ss"))
+    
+    time.sleep(1)
+    
+    print("Schema of aggregation data frame:")
+    
+    aggregation_df.printSchema()
+    
+    aggregation_df = aggregation_df \
+        .withWatermark("trading_time", "3 minutes") \
+        .groupBy(
+            col("ticker"), 
+            window("trading_time", "1 minute", "1 minute")) \
+        .agg(
+            first("open").alias("open"),
+            max("high").alias("high"),
+            min("low").alias("low"),
+            last("close").alias("close"),
+            sum("volume").alias("volume")
+        )
+    
+    aggregation_df1 = aggregation_df.select(
+        col("window.start").alias("start_time"),
+        col("window.end").alias("end_time"),
+        'ticker',
+        'open',
+        'high',
+        'low',
+        'close',
+        'volume'
+    )
+    
+    data = aggregation_df1.writeStream \
+        .foreachBatch(write_to_aggregation_table) \
+        .outputMode("update") \
         .start()
 
-    cassandra_table.awaitTermination()
-
+    data.awaitTermination()
+    
     print("Task completed!")
-
-
-def main():
-    run_spark_job()
-
-
-main()

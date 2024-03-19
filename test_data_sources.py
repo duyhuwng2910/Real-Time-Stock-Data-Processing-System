@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 import time
 import os
+from collections import OrderedDict
 
 import mysql.connector
 from sqlalchemy import create_engine, types
@@ -20,6 +21,12 @@ sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing
 
 import config
 
+mysql_host = "localhost"
+mysql_user = "root"
+mysql_password = "root"
+mysql_db = "vietnam_stock"
+
+# If using python-mysql connector library
 connection = mysql.connector.connect(user='root',
                                      password='root',
                                      host='localhost',
@@ -27,62 +34,69 @@ connection = mysql.connector.connect(user='root',
 
 cursor = connection.cursor()
 
-# Create a SQLAlchemy engine to connect to the MySQL database
+connection_string = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}/{mysql_db}"
+
+
+# If using SQLAlchemy, create a SQLAlchemy engine to connect to the MySQL database
 engine = create_engine("mysql+mysqlconnector://root:root@localhost/vietnam_stock")
 
-try:
-    company_overview = vnstock.company_overview('GAS')
+# Uncomment the below line if you use Ubuntu
+# df = pd.read_excel('/home/nguyenduyhung/graduation_thesis/project/Excel files/vn_stock.xlsx', sheet_name='Stock')
 
-except Exception as e:
+# Uncomment the below line if you use Windows
+stock_df = pd.read_excel(
+    'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',
+    sheet_name='Stock')
 
-    print(f"Error while ingesting data:{e}")
+ticker_df = stock_df['ticker']
 
-company_overview.rename(columns={
-'exchange': 'exchange_name',
-'companyType': 'company_type',
-'noShareholders': 'number_of_shareholders',
-'foreignPercent': 'foreign_percent',
-'outstandingShare': 'outstanding_share',
-'issueShare': 'issue_share',
-'establishedYear': 'established_year',
-'noEmployees': 'number_of_employees',
-'stockRating': 'stock_rating',
-'deltaInWeek': 'delta_in_week',
-'deltaInMonth': 'delta_in_month',
-'deltaInYear': 'delta_in_year',
-'shortName': 'short_name',
-'industryEn': 'industry_en',
-'industryID': 'industry_id',
-'industryIDv2': 'industry_id_v2'
-},
-inplace=True)
+cursor.execute('DELETE FROM real_time_stock_trading_data_one_min;')
 
-try:
-    company_overview.to_sql('companies_overview', con=engine, if_exists='append', index=False,
-                    index_label='ticker',
-                    dtype={
-                    'ticker': types.VARCHAR(255),
-                    'exchange_name': types.VARCHAR(255),
-                    'industry': types.VARCHAR(255),
-                    'company_type': types.VARCHAR(255),
-                    'no_share_holders': types.BIGINT,
-                    'foreign_percent': types.FLOAT,
-                    'out_standing_share': types.FLOAT,
-                    'issue_share': types.FLOAT,
-                    'established_year': types.VARCHAR(255),
-                    'no_employees': types.BIGINT,
-                    'stock_rating': types.FLOAT,
-                    'delta_in_week': types.FLOAT,
-                    'delta_in_month': types.FLOAT,
-                    'delta_in_year': types.FLOAT,
-                    'short_name': types.VARCHAR(255),
-                    'industry_en': types.VARCHAR(255),
-                    'industry_id': types.INT,
-                    'industry_id_v2': types.VARCHAR(255),
-                    'website': types.VARCHAR(255)
-                    })
+connection.commit()
 
-    print(f"Insert companies overview data of completely!")
+# for ticker in ticker_df:
+#     df = pd.read_sql(f"SELECT * FROM intraday_stock_data WHERE ticker = '{ticker}' ORDER BY time ASC", con=connection_string)
 
-except Exception as e:
-    print(f"Error here:{e}")
+#     df['time'] = pd.to_datetime(df['time'])
+
+#     df.set_index('time', inplace=True)
+
+#     ohlc_df = df.resample('3min').agg(
+#         OrderedDict([
+#             ('open', 'first'),
+#             ('high', 'max'),
+#             ('low', 'min'),
+#             ('close', 'last'),
+#             ('volume', 'sum'),
+#         ])
+#     )
+    
+#     ohlc_df['ticker'] = df['ticker']
+    
+#     ohlc_df.to_sql('intraday_stock_data_three_mins', con=engine, if_exists='append', index=False)
+
+# print("done")
+
+df = pd.read_sql(f"SELECT trading_time, ticker, open, high, low, close, volume FROM real_time_stock_trading_data WHERE ticker = 'VPB' ORDER BY trading_time ASC", con=connection_string)
+
+df['trading_time'] = pd.to_datetime(df['trading_time'])
+
+df.set_index('trading_time', inplace=True)
+
+ohlc_df = df.resample('1min', label='left', closed='right').agg(
+    OrderedDict([
+        ('open', 'first'),
+        ('high', 'max'),
+        ('low', 'min'),
+        ('close', 'last'),
+        ('volume', 'sum')
+    ])
+)
+
+ohlc_df = ohlc_df.assign(ticker='VPB')
+
+ohlc_df = ohlc_df.reset_index()
+
+print(ohlc_df)
+
+ohlc_df.to_sql('real_time_stock_trading_data_one_min', con=engine, if_exists='append', index=False)
