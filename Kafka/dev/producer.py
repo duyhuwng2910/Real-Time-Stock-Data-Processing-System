@@ -1,5 +1,6 @@
 import threading
 import json
+import pandas as pd
 import sys
 
 # Uncomment if you use Windows
@@ -10,8 +11,11 @@ sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing
 
 import config
 
+from concurrent.futures import ThreadPoolExecutor
+
 from ssi_fc_data.fc_md_stream import MarketDataStream
 from ssi_fc_data.fc_md_client import MarketDataClient
+from ssi_fc_data import model
 
 from kafka import KafkaProducer
 
@@ -19,6 +23,10 @@ bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                          value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+
+client = MarketDataClient(config)
+
+num_threads = 8
 
 
 # get market data message
@@ -35,17 +43,43 @@ def get_error(error):
     print(error)
 
 
-def main():
-    stream = MarketDataStream(config, MarketDataClient(config))
-    
-    # ticker = input("Please type the ticker you want to extract real time data:")
-    
-    ticker = 'B:BID-CTG-MBB-TCB-VCB'
-    
+def extract_real_time_stock_trading_data(stream: MarketDataStream, ticker: str):
+    ticker = 'B:' + ticker
+
     stream.start(get_market_data, get_error, ticker)
 
     while True:
         pass
+
+
+def main():
+    # Uncomment the below line if you use Ubuntu
+    # df = pd.read_excel('/home/nguyenduyhung/graduation_thesis/project/Excel files/vn_stock.xlsx', sheet_name='Stock')
+
+    # Uncomment the below line if you use Windows
+    # df = pd.read_excel(
+    #     'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',
+    #     sheet_name='Stock')
+
+    # df['first_trading_date'] = df['first_trading_date'].dt.strftime('%Y-%m-%d')
+    #
+    # hose_df = df.loc[df['exchange'] == 'HOSE']
+    #
+    # hose_ticker_df = hose_df['ticker']
+
+    json_data = client.index_components(config, model.index_components('vn30', 1, 50))
+
+    df = pd.DataFrame(json_data['data'][0]['IndexComponent'])
+
+    ticker_list = df['StockSymbol'].to_list()
+    
+    stream = MarketDataStream(config, MarketDataClient(config))
+    
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        executor.map(extract_real_time_stock_trading_data, stream, ticker_list)
+    
+
+    print("Finished")
 
 
 main()

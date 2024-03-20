@@ -18,13 +18,26 @@ spark_conn = SparkSession.builder \
 spark_conn.sparkContext.setLogLevel("ERROR")
 
 
-def write_to_cassandra(df, epochId):
+def write_to_real_time_table(df, epoc_id):
     try:
         df.write \
             .format("org.apache.spark.sql.cassandra") \
             .options(table="real_time_stock_trading_data", keyspace="vietnam_stock") \
             .mode("append") \
             .save()
+    except Exception as e:
+        print(f"Error while writing to Cassandra:{e}")
+
+
+def write_to_aggregation_table(df, epoc_id):
+    try:
+        df.write \
+            .format("org.apache.spark.sql.cassandra") \
+            .options(table="real_time_stock_trading_data_one_min", keyspace="vietnam_stock") \
+            .mode("append") \
+            .save()
+            
+        print("Ok")
     except Exception as e:
         print(f"Error while writing to Cassandra:{e}")
 
@@ -49,8 +62,6 @@ def run_spark_job():
     print("Schema of the json dataframe: ")
 
     json_df.printSchema()
-    
-    time.sleep(1)
     
     json_schema = (StructType()
                    .add("RType", StringType(), False)
@@ -86,15 +97,57 @@ def run_spark_job():
         .withColumnRenamed("Volume", "volume") \
         .withColumnRenamed("offset", "id")
 
-    stock_df2 = stock_df1.select('id', 'trading_time', 'ticker', 'open', 'high', 'low', 'close', 'volume')
+    real_time_stock_df = stock_df1.select('id', 'trading_time', 'ticker', 'open', 'high', 'low', 'close', 'volume')
+    
+    aggregation_df = stock_df1.withColumn("trading_time", date_format("trading_time", "yyyy-MM-dd HH:mm:00"))
+    
+    aggregation_df = aggregation_df.withColumn("trading_time", to_timestamp("trading_time", "yyyy-MM-dd HH:mm:ss"))
+    
+    time.sleep(1)
+    
+    print("Schema of aggregation data frame:")
+    
+    aggregation_df.printSchema()
+    
+    aggregation_df = aggregation_df \
+        .withWatermark("trading_time", "3 minutes") \
+        .groupBy(
+            col("ticker"), 
+            window("trading_time", "1 minute", "1 minute")) \
+        .agg(
+            first("open").alias("open"),
+            max("high").alias("high"),
+            min("low").alias("low"),
+            last("close").alias("close"),
+            sum("volume").alias("volume")
+        )
+    
+    aggregation_df1 = aggregation_df.select(
+        col("window.start").alias("start_time"),
+        col("window.end").alias("end_time"),
+        'ticker',
+        'open',
+        'high',
+        'low',
+        'close',
+        'volume'
+    )
+    
+    real_time_table = real_time_stock_df.writeStream \
+    .trigger(processingTime="5 seconds") \
+    .outputMode("append") \
+    .foreachBatch(write_to_real_time_table) \
+    .start()
 
-    cassandra_table = stock_df2.writeStream \
-        .trigger(processingTime="5 seconds") \
-        .outputMode("append") \
-        .foreachBatch(write_to_cassandra) \
+    
+    aggregation_table = aggregation_df1.writeStream \
+        .foreachBatch(write_to_aggregation_table) \
+        .outputMode("update") \
         .start()
 
-    cassandra_table.awaitTermination()
+    real_time_table.awaitTermination()
+    
+    aggregation_table.awaitTermination()
 
     print("Task completed!")
 
