@@ -31,3 +31,5 @@ CREATE TABLE real_time_stock_trading_data_one_min (
     volume int,
     PRIMARY KEY (ticker, start_time)
 );
+
+TRUNCATE TABLE real_time_stock_trading_data_one_min;

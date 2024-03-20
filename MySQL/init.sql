@@ -100,155 +100,130 @@ DROP TABLE IF EXISTS historical_stock_data_one_day;
 
 CREATE TABLE historical_stock_data_one_day (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_day_hose;
 
 CREATE TABLE historical_stock_data_one_day_hose (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_day_hnx;
 
 CREATE TABLE historical_stock_data_one_day_hnx (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS historical_stock_data_one_day_upcom;
 
 CREATE TABLE historical_stock_data_one_day_upcom (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS intraday_stock_data;
 
 CREATE TABLE intraday_stock_data (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS intraday_stock_data_one_min;
 
 CREATE TABLE intraday_stock_data_one_min (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS intraday_stock_data_three_mins;
 
 CREATE TABLE intraday_stock_data_three_mins (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS intraday_stock_data_five_mins;
 
 CREATE TABLE intraday_stock_data_five_mins (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS intraday_stock_data_fifteen_mins;
 
 CREATE TABLE intraday_stock_data_fifteen_mins (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS intraday_stock_data_thirty_mins;
 
 CREATE TABLE intraday_stock_data_thirty_mins (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
+    volume BIGINT
 );
 
 DROP TABLE IF EXISTS intraday_stock_data_one_hour;
 
 CREATE TABLE intraday_stock_data_one_hour (
     `time` DATETIME,
+    ticker VARCHAR(20),
     `open` INTEGER,
     high INTEGER,
     low INTEGER,
     `close` INTEGER,
-    volume BIGINT,
-    ticker VARCHAR(20)
-);
-
-DROP TABLE IF EXISTS real_time_stock_trading_data;
-
-CREATE TABLE real_time_stock_trading_data (
-    id BIGINT,
-    trading_time DATETIME,
-    ticker VARCHAR(20),
-    `open` INT,
-    high INT,
-    low INT,
-    `close` INT,
-    volume INT
-);
-
-DROP TABLE IF EXISTS real_time_stock_trading_data_one_min;
-
-CREATE TABLE real_time_stock_trading_data_one_min (
-    trading_time DATETIME,
-    ticker VARCHAR(20),
-    `open` INT,
-    high INT,
-    low INT,
-    `close` INT,
-    volume INT
+    volume BIGINT
 );

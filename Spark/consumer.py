@@ -37,7 +37,7 @@ def write_to_aggregation_table(df, epoc_id):
             .mode("append") \
             .save()
             
-        print("Ok")
+        print("Write successfully!")
     except Exception as e:
         print(f"Error while writing to Cassandra:{e}")
 

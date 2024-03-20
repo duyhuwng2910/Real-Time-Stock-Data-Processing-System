@@ -3,12 +3,12 @@ import pandas as pd
 import datetime
 import time
 import os
+from collections import OrderedDict
 
 import mysql.connector
 from sqlalchemy import create_engine
 
 import vnstock_data
-from ssi_fc_data import fc_md_client, model
 import sys
 
 # Uncomment if you use Windows
@@ -24,11 +24,10 @@ connection = mysql.connector.connect(user='root',
                                      host='localhost',
                                      database='vietnam_stock')
 
+cursor = connection.cursor()
+
 # Create a SQLAlchemy engine to connect to the MySQL database
 engine = create_engine("mysql+mysqlconnector://root:root@localhost/vietnam_stock")
-
-# Create SSI client
-client = fc_md_client.MarketDataClient(config)
 
 
 def extract_daily_ohlcv_data(df: pd.DataFrame):
@@ -43,16 +42,16 @@ def extract_daily_ohlcv_data(df: pd.DataFrame):
 
     exchange_name = exchange.upper()
 
-    columns = ['time', 'open', 'high', 'low', 'close', 'volume', 'ticker']
+    columns = ['time', 'ticker', 'open', 'high', 'low', 'close', 'volume']
 
     dtypes = {
         'time': 'object',
+        'ticker': 'object',
         'open': 'int64',
         'high': 'int64',
         'low': 'int64',
         'close': 'int64',
-        'volume': 'int64',
-        'ticker': 'object'
+        'volume': 'int64'
     }
 
     exchange_df = pd.DataFrame(columns=columns)
@@ -75,6 +74,8 @@ def extract_daily_ohlcv_data(df: pd.DataFrame):
                                                                  source='SSI')
 
             historical_data['time'] = pd.to_datetime(historical_data['time'])
+            
+            historical_data = historical_data.loc[:, ['time', 'ticker', 'open', 'high', 'low', 'close', 'volume']]
 
             try:
                 exchange_df = pd.concat([exchange_df, historical_data])
@@ -133,48 +134,6 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
     """
     print("Starting extracting historical stock data...")
     
-    cursor = connection.cursor()
-    
-    # If you run the first time, please uncomment this below line to run.
-    # After running first time, you can comment this line
-    cursor.execute('''
-                    DROP TABLE IF EXISTS historical_stock_data_one_day_hose;
-
-                    CREATE TABLE historical_stock_data_one_day_hose (
-                        `time` DATETIME,
-                        `open` INTEGER,
-                        high INTEGER,
-                        low INTEGER,
-                        `close` INTEGER,
-                        volume BIGINT,
-                        ticker VARCHAR(20)
-                    );
-
-                    DROP TABLE IF EXISTS historical_stock_data_one_day_hnx;
-
-                    CREATE TABLE historical_stock_data_one_day_hnx (
-                        `time` DATETIME,
-                        `open` INTEGER,
-                        high INTEGER,
-                        low INTEGER,
-                        `close` INTEGER,
-                        volume BIGINT,
-                        ticker VARCHAR(20)
-                    );
-
-                    DROP TABLE IF EXISTS historical_stock_data_one_day_upcom;
-
-                    CREATE TABLE historical_stock_data_one_day_upcom (
-                        `time` DATETIME,
-                        `open` INTEGER,
-                        high INTEGER,
-                        low INTEGER,
-                        `close` INTEGER,
-                        volume BIGINT,
-                        ticker VARCHAR(20)
-                    );
-                   ''')
-    
     threads_list = []
 
     for exchange_df in exchange_df_list:
@@ -186,8 +145,6 @@ def extract_daily_historical_stock_data(exchange_df_list: list):
 
     for thread in threads_list:
         thread.join()
-    
-    cursor.close()
     
     time.sleep(5)
 
@@ -204,16 +161,16 @@ def extract_intraday_ohlcv_data(df: pd.DataFrame, trading_date: str):
 
     exchange = df.iloc[0, df.columns.get_loc('exchange')]
 
-    columns = ['time', 'open', 'high', 'low', 'close', 'volume', 'ticker']
+    columns = ['time', 'ticker', 'open', 'high', 'low', 'close', 'volume']
 
     dtypes = {
         'time': 'object',
+        'ticker': 'object',
         'open': 'int64',
         'high': 'int64',
         'low': 'int64',
         'close': 'int64',
-        'volume': 'int64',
-        'ticker': 'object'
+        'volume': 'int64'
     }
 
     exchange_df = pd.DataFrame(columns=columns)
@@ -232,7 +189,6 @@ def extract_intraday_ohlcv_data(df: pd.DataFrame, trading_date: str):
                                                                beautify=True,
                                                                decor=False,
                                                                source='SSI')
-
             if intraday_data.shape[0] > 0:
                 try:
                     exchange_df = pd.concat([exchange_df, intraday_data])
@@ -249,6 +205,8 @@ def extract_intraday_ohlcv_data(df: pd.DataFrame, trading_date: str):
             continue
 
     try:
+        exchange_df = exchange_df.loc[:, ['time', 'ticker', 'open', 'high', 'low', 'close', 'volume']]
+        
         exchange_df.to_sql('intraday_stock_data', con=engine, if_exists='append', index=False)
 
         print(f"Insert intraday stock data of exchange {exchange} completely!")
@@ -301,24 +259,8 @@ def extract_intraday_stock_data(exchange_list: list):
         Function to get the intraday stock data of all of Vietnam Stock Market
     """
     print("Starting extracting intraday stock data...")
-
-    cursor = connection.cursor()
     
     latest_trading_date = get_latest_trading_date()
-
-    cursor.execute('''
-                    DROP TABLE IF EXISTS intraday_stock_data;
-
-                    CREATE TABLE intraday_stock_data (
-                        `time` DATETIME,
-                        `open` INTEGER,
-                        high INTEGER,
-                        low INTEGER,
-                        `close` INTEGER,
-                        volume BIGINT,
-                        ticker VARCHAR(20)
-                    );
-                   ''')
 
     threads_list = []
 
@@ -332,11 +274,55 @@ def extract_intraday_stock_data(exchange_list: list):
     for thread in threads_list:
         thread.join()
 
-    cursor.close()
-    
     time.sleep(5)
 
     print("Insert intraday stock data of Vietnam Stock Market successfully!")
+
+
+def aggregate_intraday_stock_data(ticker_df: pd.DataFrame, ticker: str):    
+    '''
+        Function to aggregate the intraday stock data
+    '''
+    ticker_df['time'] = pd.to_datetime(ticker_df['time'])
+
+    ticker_df.set_index('time', inplace=True)
+
+    ohlc_df = ticker_df.resample('5mins', label='left', closed='right').agg(
+        OrderedDict([
+            ('open', 'first'),
+            ('high', 'max'),
+            ('low', 'min'),
+            ('close', 'last'),
+            ('volume', 'sum')
+        ])
+    )
+
+    ohlc_df = ohlc_df.assign(ticker=ticker)
+
+    ohlc_df = ohlc_df.reset_index()
+    
+    ohlc_df['time'] = pd.to_datetime(ohlc_df['time'])
+    
+    ohlc_df = ohlc_df.fillna(0)
+    
+    ohlc_df = ohlc_df.astype(
+        {
+            "open": "int",
+            "high": "int",
+            "low": "int",
+            "close": "int"
+        }
+    )
+    
+    ohlc_df = ohlc_df.loc[:, ['time', 'ticker', 'open', 'high', 'low', 'close', 'volume']]
+    
+    try:
+        ohlc_df.to_sql("intraday_stock_data_five_mins", engine, if_exists='append', index=False)
+    
+        print(f"Insert aggregation data of {ticker} successfully!")
+
+    except Exception as e:
+        print(f"Error while inserting aggregation data of {ticker}: {e}")
 
 
 def main():
@@ -358,12 +344,76 @@ def main():
 
     exchange_df_list = [hose_df, hnx_df, upcom_df]
 
-    # extract_daily_historical_stock_data(exchange_df_list)
+    cursor.execute('''
+                    DROP TABLE IF EXISTS historical_stock_data_one_day_hose;
+
+                    CREATE TABLE historical_stock_data_one_day_hose (
+                        `time` DATETIME,
+                        ticker VARCHAR(20),
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT
+                    );
+
+                    DROP TABLE IF EXISTS historical_stock_data_one_day_hnx;
+
+                    CREATE TABLE historical_stock_data_one_day_hnx (
+                        `time` DATETIME,
+                        ticker VARCHAR(20),
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT
+                    );
+
+                    DROP TABLE IF EXISTS historical_stock_data_one_day_upcom;
+
+                    CREATE TABLE historical_stock_data_one_day_upcom (
+                        `time` DATETIME,
+                        ticker VARCHAR(20),
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT
+                    );
+                    
+                    DROP TABLE IF EXISTS intraday_stock_data;
+
+                    CREATE TABLE intraday_stock_data (
+                        `time` DATETIME,
+                        ticker VARCHAR(20),
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT,
+                    );
+                    
+                    DROP TABLE IF EXISTS intraday_stock_data_five_mins;
+
+                    CREATE TABLE intraday_stock_data_five_mins (
+                        `time` DATETIME,
+                        ticker VARCHAR(20),
+                        `open` INTEGER,
+                        high INTEGER,
+                        low INTEGER,
+                        `close` INTEGER,
+                        volume BIGINT,               
+                    );
+                   ''')
     
-    # time.sleep(3)
+    extract_daily_historical_stock_data(exchange_df_list)
+    
+    time.sleep(3)
 
     extract_intraday_stock_data(exchange_df_list)
-
+    
+    cursor.close()
+    
     connection.close()
 
 
