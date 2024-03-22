@@ -26,8 +26,6 @@ producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
 
 client = MarketDataClient(config)
 
-num_threads = 8
-
 
 # get market data message
 def get_market_data(message):
@@ -35,7 +33,7 @@ def get_market_data(message):
 
     data = json.loads(trading_info)
 
-    producer.send('hose', data)
+    producer.send('test', data)
 
 
 # get error
@@ -73,11 +71,21 @@ def main():
 
     ticker_list = df['StockSymbol'].to_list()
     
-    stream = MarketDataStream(config, MarketDataClient(config))
+    num_threads = len(ticker_list)
     
-    with ThreadPoolExecutor(max_workers=num_threads) as executor:
-        executor.map(extract_real_time_stock_trading_data, stream, ticker_list)
+    executor =ThreadPoolExecutor(max_workers=num_threads)
+
+    threads_list = []
     
+    for ticker in ticker_list:
+        stream = MarketDataStream(config, MarketDataClient(config))
+        
+        future = executor.submit(extract_real_time_stock_trading_data, stream, ticker)
+        
+        threads_list.append(future)
+        
+    for future in threads_list:
+        future.result()
 
     print("Finished")
 

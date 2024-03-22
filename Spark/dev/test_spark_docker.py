@@ -7,3 +7,5 @@ spark = SparkSession.builder \
 df = spark.read.csv("test.csv")
 
 df.show()
+
+spark.stop()

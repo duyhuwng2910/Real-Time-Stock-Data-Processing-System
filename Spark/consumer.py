@@ -12,7 +12,6 @@ spark_conn = SparkSession.builder \
     .appName("Real Time Stock Data Processing Project") \
     .config("spark.cassandra.connection.host", "cassandra-1") \
     .config("spark.cassandra.connection.port", "9042") \
-    .master("local[*]") \
     .getOrCreate()
 
 spark_conn.sparkContext.setLogLevel("ERROR")
@@ -150,6 +149,8 @@ def run_spark_job():
     aggregation_table.awaitTermination()
 
     print("Task completed!")
+    
+    spark_conn.stop()
 
 
 def main():
