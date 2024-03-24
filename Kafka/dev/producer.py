@@ -1,13 +1,12 @@
-import threading
 import json
 import pandas as pd
 import sys
 
 # Uncomment if you use Windows
-sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+# sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
 
 # Uncomment if you use Ubuntu
-# sys.path.append(r'/home/nguyenduyhung/graduation_thesis/project/SSI')
+sys.path.append(r'/home/nguyenduyhung/graduation_thesis/Real-Time-Stock-Data-Processing-System/SSI')
 
 import config
 
@@ -70,20 +69,20 @@ def main():
     df = pd.DataFrame(json_data['data'][0]['IndexComponent'])
 
     ticker_list = df['StockSymbol'].to_list()
-    
+
     num_threads = len(ticker_list)
-    
-    executor =ThreadPoolExecutor(max_workers=num_threads)
+
+    executor = ThreadPoolExecutor(max_workers=num_threads)
 
     threads_list = []
-    
+
     for ticker in ticker_list:
         stream = MarketDataStream(config, MarketDataClient(config))
-        
+
         future = executor.submit(extract_real_time_stock_trading_data, stream, ticker)
-        
+
         threads_list.append(future)
-        
+
     for future in threads_list:
         future.result()
 

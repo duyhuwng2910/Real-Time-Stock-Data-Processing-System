@@ -35,7 +35,7 @@ def write_to_aggregation_table(df, epoc_id):
             .options(table="real_time_stock_trading_data_one_min", keyspace="vietnam_stock") \
             .mode("append") \
             .save()
-            
+
         print("Write successfully!")
     except Exception as e:
         print(f"Error while writing to Cassandra:{e}")
@@ -61,7 +61,7 @@ def run_spark_job():
     print("Schema of the json dataframe: ")
 
     json_df.printSchema()
-    
+
     json_schema = (StructType()
                    .add("RType", StringType(), False)
                    .add("TradingDate", StringType(), False)
@@ -74,7 +74,8 @@ def run_spark_job():
                    .add("Volume", DoubleType(), True)
                    .add("Value", DoubleType(), False))
 
-    stock_df = json_df.select(json_df['offset'], from_json(col("value"), json_schema).alias("data")).selectExpr("offset", "data.*")
+    stock_df = json_df.select(json_df['offset'], from_json(col("value"), json_schema).alias("data")).selectExpr(
+        "offset", "data.*")
 
     stock_df1 = stock_df.withColumn("TradingDate", to_date(stock_df['TradingDate'], "dd/MM/yyyy"))
 
@@ -97,30 +98,30 @@ def run_spark_job():
         .withColumnRenamed("offset", "id")
 
     real_time_stock_df = stock_df1.select('id', 'trading_time', 'ticker', 'open', 'high', 'low', 'close', 'volume')
-    
+
     aggregation_df = stock_df1.withColumn("trading_time", date_format("trading_time", "yyyy-MM-dd HH:mm:00"))
-    
+
     aggregation_df = aggregation_df.withColumn("trading_time", to_timestamp("trading_time", "yyyy-MM-dd HH:mm:ss"))
-    
+
     time.sleep(1)
-    
+
     print("Schema of aggregation data frame:")
-    
+
     aggregation_df.printSchema()
-    
+
     aggregation_df = aggregation_df \
         .withWatermark("trading_time", "3 minutes") \
         .groupBy(
-            col("ticker"), 
-            window("trading_time", "1 minute", "1 minute")) \
+        col("ticker"),
+        window("trading_time", "1 minute", "1 minute")) \
         .agg(
-            first("open").alias("open"),
-            max("high").alias("high"),
-            min("low").alias("low"),
-            last("close").alias("close"),
-            sum("volume").alias("volume")
-        )
-    
+        first("open").alias("open"),
+        max("high").alias("high"),
+        min("low").alias("low"),
+        last("close").alias("close"),
+        sum("volume").alias("volume")
+    )
+
     aggregation_df1 = aggregation_df.select(
         col("window.start").alias("start_time"),
         col("window.end").alias("end_time"),
@@ -131,25 +132,24 @@ def run_spark_job():
         'close',
         'volume'
     )
-    
-    real_time_table = real_time_stock_df.writeStream \
-    .trigger(processingTime="5 seconds") \
-    .outputMode("append") \
-    .foreachBatch(write_to_real_time_table) \
-    .start()
 
-    
+    real_time_table = real_time_stock_df.writeStream \
+        .trigger(processingTime="5 seconds") \
+        .outputMode("append") \
+        .foreachBatch(write_to_real_time_table) \
+        .start()
+
     aggregation_table = aggregation_df1.writeStream \
         .foreachBatch(write_to_aggregation_table) \
         .outputMode("update") \
         .start()
 
     real_time_table.awaitTermination()
-    
+
     aggregation_table.awaitTermination()
 
     print("Task completed!")
-    
+
     spark_conn.stop()
 
 

@@ -33,3 +33,19 @@ CREATE TABLE real_time_stock_trading_data_one_min (
 );
 
 TRUNCATE TABLE real_time_stock_trading_data_one_min;
+
+DROP TABLE IF EXISTS test;
+
+CREATE TABLE test (
+    id int,
+    trading_time timestamp,
+    ticker text,
+    open int,
+    high int,
+    low int,
+    close int,
+    volume int,
+    PRIMARY KEY (ticker, trading_time, id)
+);
+
+TRUNCATE TABLE test;
