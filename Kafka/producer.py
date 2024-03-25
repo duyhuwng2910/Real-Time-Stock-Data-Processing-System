@@ -9,10 +9,10 @@ from ssi_fc_data import model
 from kafka import KafkaProducer
 
 # Uncomment if you use Windows
-# sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
+sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
 
 # Uncomment if you use Ubuntu
-sys.path.append(r'/home/nguyenduyhung/graduation_thesis/Real-Time-Stock-Data-Processing-System/SSI')
+# sys.path.append(r'/home/nguyenduyhung/graduation_thesis/Real-Time-Stock-Data-Processing-System/SSI')
 
 import config
 
