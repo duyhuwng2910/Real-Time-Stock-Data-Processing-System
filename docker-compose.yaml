@@ -143,6 +143,7 @@ services:
   schema-registry:
     image: confluentinc/cp-schema-registry:latest
     container_name: schema-registry
+    hostname: schema-registry
     networks:
       - graduation-thesis
     depends_on:
@@ -163,6 +164,7 @@ services:
   control-center:
     image: confluentinc/cp-enterprise-control-center:latest
     container_name: control-center
+    hostname: control-center
     networks:
       - graduation-thesis
     depends_on:

@@ -1,0 +1,151 @@
+version: "3"
+
+networks:
+  graduation-thesis:
+    external: true
+
+services:
+  kafka-controller-1:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka-controller-1
+    container_name: kafka-controller-1
+    networks:
+      - graduation-thesis
+    profiles: ["ctl", "all"]
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_NODE_ID: 1
+      JMX_PORT: 9101
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-controller-1:9092,2@kafka-controller-2:9092'
+      KAFKA_LISTENERS: 'CONTROLLER://kafka-controller-1:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CONFLUENT_METRICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: '/tmp/kraft-logs'
+      CLUSTER_ID: 'nguyeexnduyhuwng291002'
+
+  kafka-controller-2:
+    image: confluentinc/cp-server:latest
+    hostname: kafka-controller-2
+    container_name: kafka-controller-2
+    networks:
+      - graduation-thesis
+    depends_on:
+      - kafka-controller-1
+    profiles: ["ctl", "all"]
+    ports:
+      - "19092:9092"
+      - "9102:9101"
+    environment:
+      KAFKA_NODE_ID: 2
+      JMX_PORT: 9101
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-controller-1:9092,2@kafka-controller-2:9092'
+      KAFKA_LISTENERS: 'CONTROLLER://kafka-controller-2:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CONFLUENT_METRICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: '/tmp/kraft-logs'
+      CLUSTER_ID: 'nguyeexnduyhuwng291002'
+
+  kafka-broker-1:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka-broker-1
+    container_name: kafka-broker-1
+    networks:
+      - graduation-thesis
+    profiles: ["broker", "all"]
+    ports:
+      - '9093:9093'
+      - '29093:29093'
+      - '9103:9101'
+    environment:
+      KAFKA_NODE_ID: 3
+      JMX_PORT: 9101
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-broker-1:9093,EXTERNAL://localhost:29093'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-controller-1:9092,2@kafka-controller-2:9092'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka-broker-1:9093,EXTERNAL://0.0.0.0:29093'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-logs'
+      CLUSTER_ID: 'nguyeexnduyhuwng291002'
+
+  kafka-broker-2:
+    image: confluentinc/cp-server:latest
+    hostname: kafka-broker-2
+    container_name: kafka-broker-2
+    networks:
+      - graduation-thesis
+    depends_on:
+      - kafka-broker-1
+    profiles: ["broker", "all"]
+    ports:
+      - '9094:9094'
+      - '29094:29094'
+      - '9104:9101'
+    environment:
+      KAFKA_NODE_ID: 4
+      JMX_PORT: 9101
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-broker-2:9094,EXTERNAL://localhost:29094'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-controller-1:9092,2@kafka-controller-2:9092'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka-broker-2:9094,EXTERNAL://0.0.0.0:29094'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-logs'
+      CLUSTER_ID: 'nguyeexnduyhuwng291002'
+
+  kafka-broker-3:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka-broker-3
+    container_name: kafka-broker-3
+    networks:
+      - graduation-thesis
+    depends_on:
+      - kafka-broker-1
+      - kafka-broker-2
+    profiles: ["broker", "all"]
+    ports:
+      - '9095:9095'
+      - '29095:29095'
+      - '9105:9101'
+    environment:
+      KAFKA_NODE_ID: 5
+      JMX_PORT: 9101
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-broker-3:9095,EXTERNAL://localhost:29095'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-controller-1:9092,2@kafka-controller-2:9092'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka-broker-3:9095,EXTERNAL://0.0.0.0:29095'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-logs'
+      CLUSTER_ID: 'nguyeexnduyhuwng291002'

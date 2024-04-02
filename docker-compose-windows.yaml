@@ -2,7 +2,7 @@ version: "3"
 
 networks:
   graduation-thesis:
-    driver: bridge
+    external: true
 
 services:
   kafka-controller-1:
@@ -11,8 +11,10 @@ services:
     container_name: kafka-controller-1
     networks:
       - graduation-thesis
+    profiles: ["ctl", "all"]
     ports:
       - "9092:9092"
+      - "9101:9101"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
@@ -27,6 +29,9 @@ services:
       KAFKA_LISTENERS: 'CONTROLLER://kafka-controller-1:9092'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
       KAFKA_LOG_DIRS: '/tmp/kraft-logs'
       CLUSTER_ID: 'nguyeexnduyhuwng291002'
 
@@ -36,9 +41,11 @@ services:
     container_name: kafka-broker-1
     networks:
       - graduation-thesis
+    profiles: ["broker", "all"]
     ports:
       - '9093:9093'
       - '29093:29093'
+      - '9102:9101'
     environment:
       KAFKA_NODE_ID: 2
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
@@ -54,6 +61,9 @@ services:
       KAFKA_LISTENERS: 'PLAINTEXT://:9093,EXTERNAL://:29093'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'BROKER'
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
       KAFKA_LOG_DIRS: '/tmp/kraft-logs'
       CLUSTER_ID: 'nguyeexnduyhuwng291002'
       MAX_HEAP_SIZE: 1024M
@@ -64,9 +74,11 @@ services:
     container_name: kafka-broker-2
     networks:
       - graduation-thesis
+    profiles: ["broker", "all"]
     ports:
       - '9094:9094'
       - '29094:29094'
+      - '9103:9101'
     environment:
       KAFKA_NODE_ID: 3
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
@@ -82,9 +94,19 @@ services:
       KAFKA_LISTENERS: 'PLAINTEXT://:9094,EXTERNAL://:29094'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'BROKER'
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
       KAFKA_LOG_DIRS: '/tmp/kraft-logs'
       CLUSTER_ID: 'nguyeexnduyhuwng291002'
       MAX_HEAP_SIZE: 1024M
+
+  kafka-tools:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-tools
+    hostname: kafka-tools
+    command: ["tail", "-f", "/dev/null"]
+    network_mode: "host"
 
   # Dịch vụ Schema Registry
   schema-registry:
@@ -97,10 +119,10 @@ services:
       - kafka-broker-1
       - kafka-broker-2
     ports:
-      - "8082:8082"
+      - "8081:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8082
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka-broker-1:9093,kafka-broker-2:9094'
       MAX_HEAP_SIZE: 1024M
 
@@ -119,7 +141,7 @@ services:
       - "9021:9021"
     environment:
       CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka-broker-1:9093,kafka-broker-2:9094'
-      CONTROL_CENTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8082'
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
       CONTROL_CENTER_REPLICATION_FACTOR: 1
       CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
@@ -127,13 +149,12 @@ services:
 
   # Cấu hình Spark containers
   spark-master:
-    image: spark-prometheus:latest
+    image: spark-graphite:latest
     container_name: spark-master
     networks:
       - graduation-thesis
     ports:
       - '8080:8080'
-      - '8081:8081'
       - '7077:7077'
       - '4040:4040'
     environment:
@@ -145,7 +166,7 @@ services:
       - SPARK_USER=spark
 
   spark-worker-1:
-    image: spark-prometheus:latest
+    image: spark-graphite:latest
     container_name: spark-worker-1
     networks:
       - graduation-thesis
@@ -165,7 +186,7 @@ services:
       - SPARK_USER=spark
 
   spark-worker-2:
-    image: spark-prometheus:latest
+    image: spark-graphite:latest
     container_name: spark-worker-2
     networks:
       - graduation-thesis
@@ -204,13 +225,14 @@ services:
 
   # Cấu hình cụm Cassandra
   cassandra-1:
-    image: cassandra:latest
+    image: cassandra-monitor
     container_name: cassandra-1
     hostname: cassandra-1
     networks:
       - graduation-thesis
     ports:
       - '9042:9042'
+      - '7070:7070'
     volumes:
       - cassandra_1:/var/lib/cassandra
     environment:
@@ -224,7 +246,7 @@ services:
       - CLIENT_TIMEOUT=20
 
   cassandra-2:
-    image: cassandra:latest
+    image: cassandra-monitor
     container_name: cassandra-2
     hostname: cassandra-2
     networks:
@@ -233,6 +255,7 @@ services:
       - cassandra-1
     ports:
       - '9043:9042'
+      - '7071:7070'
     volumes:
       - cassandra_2:/var/lib/cassandra
     environment:
@@ -246,7 +269,7 @@ services:
       - CLIENT_TIMEOUT=20
 
   cassandra-3:
-    image: cassandra:latest
+    image: cassandra-monitor
     container_name: cassandra-3
     hostname: cassandra-3
     networks:
@@ -256,6 +279,7 @@ services:
       - cassandra-2
     ports:
       - '9044:9042'
+      - '7072:7070'
     volumes:
       - cassandra_3:/var/lib/cassandra
     environment:
@@ -267,31 +291,6 @@ services:
       - HEAP_NEWSIZE=128M
       - MAX_HEAP_SIZE=1024M
       - CLIENT_TIMEOUT=20
-
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    hostname: node-exporter
-    networks:
-      graduation-thesis:
-    ports:
-      - '9100:9100'
-    restart: unless-stopped
-
-  # Cấu hình Prometheus
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    hostname: prometheus
-    networks:
-      graduation-thesis:
-    ports:
-      - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    volumes:
-      - ./Prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
 
   # Cấu hình Grafana container
   grafana:
@@ -315,5 +314,4 @@ volumes:
   cassandra_1:
   cassandra_2:
   cassandra_3:
-  prometheus_data:
   grafana_data:

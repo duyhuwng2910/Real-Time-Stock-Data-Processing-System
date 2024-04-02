@@ -110,7 +110,7 @@ def run_spark_job():
     aggregation_df.printSchema()
 
     aggregation_df = aggregation_df \
-        .withWatermark("trading_time", "3 minutes") \
+        .withWatermark("trading_time", "5 minutes") \
         .groupBy(
         col("ticker"),
         window("trading_time", "1 minute", "1 minute")) \
@@ -134,7 +134,7 @@ def run_spark_job():
     )
 
     real_time_table = real_time_stock_df.writeStream \
-        .trigger(processingTime="5 seconds") \
+        .trigger(processingTime="3 seconds") \
         .outputMode("append") \
         .foreachBatch(write_to_real_time_table) \
         .start()
