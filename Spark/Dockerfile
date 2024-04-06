@@ -1,7 +1,6 @@
 FROM bitnami/spark
-USER root
 
-# COPY conf/metrics-prometheus.properties /opt/bitnami/spark/conf/metrics.properties
+USER root
 
 COPY conf/metrics-graphite.properties /opt/bitnami/spark/conf/metrics.properties
 

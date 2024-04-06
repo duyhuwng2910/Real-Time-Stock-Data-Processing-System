@@ -18,7 +18,7 @@ data = {'RTYpe': 'B', 'TradingDate': '22/03/2024', 'Time': '14:44:59', 'Symbol':
 def main():
     for i in range(50):
         for j in range(200):
-            producer.send('hose', data)
+            producer.send('stock', data)
 
         time.sleep(random.random())
 

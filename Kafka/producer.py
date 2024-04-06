@@ -21,7 +21,7 @@ sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing
 
 import config
 
-bootstrap_servers = ['localhost:29093', 'localhost:29094']
+bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                          value_serializer=lambda x: json.dumps(x).encode('utf-8'))
@@ -40,7 +40,7 @@ def get_market_data(message):
 
     data = json.loads(trading_info)
 
-    producer.send('hose', data)
+    producer.send('stock', data)
 
 
 # function to get error
@@ -58,7 +58,7 @@ def main():
     # ticker = input("Please type the ticker you want to extract real time data:")
 
     # Return the data of indexes list
-    json_data = client.index_components(config, model.index_components('vn30', 1, 200))
+    # json_data = client.index_components(config, model.index_components('vn30', 1, 200))
 
     # json_data = client.index_components(config, model.index_components('vn100', 1, 200))
     

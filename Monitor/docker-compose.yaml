@@ -19,36 +19,6 @@ services:
       - "--kafka.server=kafka-broker-2:9094"
       - "--kafka.server=kafka-broker-3:9095"
 
-  # Cấu hình jmx-exporter-broker container
-  jmx-exporter-broker:
-    image: bitnami/jmx-exporter:latest
-    container_name: jmx-exporter-broker
-    hostname: jmx-exporter-broker
-    networks:
-      graduation-thesis:
-    ports:
-      - 9999:5556
-    volumes:
-      - ./exporter/exporter-brokers.yml:/opt/bitnami/jmx-exporter/exporter.yml
-    command:
-      - "5556"
-      - exporter.yml
-  
-  # Cấu hình jmx-exporter-controller container
-  jmx-exporter-controller:
-    image: bitnami/jmx-exporter:latest
-    container_name: jmx-exporter-controller
-    hostname: jmx-exporter-controller
-    networks:
-      graduation-thesis:
-    ports:
-      - 9998:5556
-    volumes:
-      - ./exporter/exporter-controllers.yml:/opt/bitnami/jmx-exporter/exporter.yml
-    command:
-      - "5556"
-      - exporter.yml
-
   # Cấu hình Prometheus container
   prometheus:
     image: prom/prometheus:latest
