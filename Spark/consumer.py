@@ -5,7 +5,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
 kafka_topic_name = "stock"
-kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094,kafka-broker-3:9095"
+kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094"
 
 # Create Spark Session
 spark_conn = SparkSession.builder \
@@ -34,13 +34,13 @@ def write_to_aggregation_table(df, epoc_id):
     try:
         df.write \
             .format("org.apache.spark.sql.cassandra") \
-            .options(table="real_time_stock_trading_data_one_min", keyspace="vietnam_stock") \
+            .options(table="aggregated_stock_trading_data", keyspace="vietnam_stock") \
             .mode("append") \
             .save()
 
         print("Aggregate successfully!")
     except Exception as e:
-        print(f"Error while writing to Cassandra:{e}")
+        print(f"Error while aggregating to Cassandra:{e}")
 
 
 def run_spark_job():

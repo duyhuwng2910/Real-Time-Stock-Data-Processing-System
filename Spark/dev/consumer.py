@@ -32,7 +32,7 @@ def write_to_aggregation_table(df, epoc_id):
     try:
         df.write \
             .format("org.apache.spark.sql.cassandra") \
-            .options(table="real_time_stock_trading_data_one_min", keyspace="vietnam_stock") \
+            .options(table="aggregated_stock_trading_data", keyspace="vietnam_stock") \
             .mode("append") \
             .save()
 

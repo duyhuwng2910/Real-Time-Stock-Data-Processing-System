@@ -2,8 +2,11 @@
 # Truy cập vào cửa sổ dòng lệnh của Kafka container
 docker exec -it kafka-controller-1 bash
 
-# Tạo kafka topic
-# Ở đây, tạo một topic với số replication factor là 2 và partitions là 2
+## Tạo kafka topic
+# Ở đây, tạo một topic với số replication factor là 1 và partitions là 2
+kafka-topics --create --topic stock --bootstrap-server kafka-controller-1:9092 --replication-factor 1 --partitions 2
+
+# Nếu khởi chạy cụm Kafka on production thì chạy dòng sau
 kafka-topics --create --topic stock --bootstrap-server kafka-controller-1:9092 --replication-factor 2 --partitions 3
 
 # Kiểm tra danh sách các topic có trong hệ thống
