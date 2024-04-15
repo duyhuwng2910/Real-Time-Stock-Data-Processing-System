@@ -17,3 +17,9 @@ kafka-topics --describe --topic stock --bootstrap-server kafka-controller-1:9092
 
 # Kiểm tra bản tin được gửi lên topic
 kafka-console-consumer --topic stock --bootstrap-server kafka-broker-1:9093
+
+kafka-topics --create --topic hose --bootstrap-server kafka-controller-1:9092 --replication-factor 1 --partitions 2
+
+kafka-topics --create --topic hnx --bootstrap-server kafka-controller-1:9092 --replication-factor 1 --partitions 2
+
+kafka-topics --create --topic upcom --bootstrap-server kafka-controller-1:9092 --replication-factor 1 --partitions 2

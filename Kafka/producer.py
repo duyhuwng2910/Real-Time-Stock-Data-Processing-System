@@ -58,13 +58,9 @@ def main():
     # ticker = input("Please type the ticker you want to extract real time data:")
 
     # Return the data of indexes list
-    # json_data = client.index_components(config, model.index_components('vn30', 1, 200))
-
-    # json_data = client.index_components(config, model.index_components('vn100', 1, 200))
-    
-    # df = pd.DataFrame(json_data['data'][0]['IndexComponent'])
-    
-    df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
+    df = vnstock_data.ssi.get_index_component(client, config, index='VN30', page=1, pageSize=100)
+        
+    # df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
     
     df.to_sql('vn_list', engine, if_exists='replace', index=False)
 

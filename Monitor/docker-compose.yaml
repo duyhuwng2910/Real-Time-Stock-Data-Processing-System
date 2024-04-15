@@ -18,6 +18,7 @@ services:
       - "--kafka.server=kafka-broker-1:9093"
       - "--kafka.server=kafka-broker-2:9094"
       - "--kafka.server=kafka-broker-3:9095"
+    restart: always
 
   # Cấu hình Prometheus container
   prometheus:
@@ -33,6 +34,7 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
+    restart: always
 
   # Cấu hình graphite-exporter container, dùng để giám sát hiệu năng của cụm Spark
   graphite-exporter:
@@ -48,6 +50,7 @@ services:
       - "9108:9108"
       - "9109:9109"
       - "9109:9109/udp"  
-
+    restart: always
+    
 volumes:
   prometheus_data:
