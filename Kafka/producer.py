@@ -57,14 +57,26 @@ def main():
     
     # ticker = input("Please type the ticker you want to extract real time data:")
 
-    # Return the data of indexes list
-    df = vnstock_data.ssi.get_index_component(client, config, index='VN30', page=1, pageSize=100)
+    # Return the data of ticker list in VN30
+    # df = vnstock_data.ssi.get_index_component(client, config, index='VN30', page=1, pageSize=100)
         
+    # Return the data of ticker list in VN100
     # df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
-    
-    df.to_sql('vn_list', engine, if_exists='replace', index=False)
 
-    ticker_list = df['StockSymbol'].to_list()
+    # Return the data of of all ticker in HOSE exchange
+    stock_df = pd.read_excel(
+        'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',
+        sheet_name='Stock')
+    
+    hose_df = stock_df.loc[stock_df['exchange'] == 'HOSE']
+    
+    df = hose_df['ticker']
+    
+    df.to_sql('stock_list', engine, if_exists='replace', index=False)
+
+    ticker_list = df.to_list()
+    
+    # ticker_list = df['StockSymbol'].to_list()
     
     ticker_string = 'B:' + ticker_list[0]
     
