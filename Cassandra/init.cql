@@ -18,7 +18,7 @@ CREATE TABLE real_time_stock_trading_data (
 
 TRUNCATE TABLE real_time_stock_trading_data;
 
-DROP TABLE IF EXISTS real_time_stock_trading_data_one_min;
+DROP TABLE IF EXISTS aggregated_stock_trading_data;
 
 CREATE TABLE aggregated_stock_trading_data (
     start_time timestamp,
@@ -32,20 +32,36 @@ CREATE TABLE aggregated_stock_trading_data (
     PRIMARY KEY (ticker, start_time)
 );
 
-TRUNCATE TABLE real_time_stock_trading_data_one_min;
+TRUNCATE TABLE aggregated_stock_trading_data;
 
-DROP TABLE IF EXISTS test;
+DROP TABLE IF EXISTS vn30_ticker_list;
 
-CREATE TABLE test (
-    id int,
-    trading_time timestamp,
+CREATE TABLE vn30_ticker_list (
     ticker text,
-    open int,
-    high int,
-    low int,
-    close int,
-    volume int,
-    PRIMARY KEY (ticker, trading_time, id)
+    PRIMARY KEY (ticker)
 );
 
-TRUNCATE TABLE test;
+TRUNCATE TABLE vn30_ticker_list;
+
+DROP TABLE IF EXISTS intraday_data;
+
+CREATE TABLE intraday_data (
+    trading_time timestamp,
+    ticker text,
+    price int,
+    volume int,
+    PRIMARY KEY (ticker, trading_time)
+);
+
+DROP TABLE IF EXISTS stock_price_one_min;
+
+CREATE TABLE stock_price_one_min (
+    trading_time timestamp,
+    ticker text,
+    price int,
+    volume int,
+    PRIMARY KEY (ticker, trading_time)
+)
+
+TRUNCATE TABLE stock_price_one_min;
+

@@ -153,7 +153,6 @@ services:
       - SPARK_METRICS_ENABLED=true
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
-      - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_test.py
       - spark_master:/bitnami
 
   spark-worker-1:
@@ -181,7 +180,6 @@ services:
       - SPARK_METRICS_ENABLED=true
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
-      - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_test.py
       - spark_worker_1:/bitnami
 
   spark-worker-2:
@@ -210,7 +208,6 @@ services:
       - SPARK_METRICS_ENABLED=true
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
-      - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_test.py
       - spark_worker_2:/bitnami
 
   # Cấu hình MySQL container
