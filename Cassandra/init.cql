@@ -34,34 +34,58 @@ CREATE TABLE aggregated_stock_trading_data (
 
 TRUNCATE TABLE aggregated_stock_trading_data;
 
-DROP TABLE IF EXISTS vn30_ticker_list;
+DROP TABLE IF EXISTS vn30_list;
 
-CREATE TABLE vn30_ticker_list (
+CREATE TABLE vn30_list (
     ticker text,
     PRIMARY KEY (ticker)
 );
 
-TRUNCATE TABLE vn30_ticker_list;
+TRUNCATE TABLE vn30_list;
 
-DROP TABLE IF EXISTS intraday_data;
+DROP TABLE IF EXISTS stock_data_for_ml;
 
-CREATE TABLE intraday_data (
+CREATE TABLE stock_data_for_ml (
     trading_time timestamp,
     ticker text,
     price int,
     volume int,
+    last_one_minute_price int,
+    last_one_minute_volume int,
+    last_two_minutes_price int,
+    last_two_minutes_volume int,
+    last_three_minutes_price int,
+    last_three_minutes_volume int,
+    last_four_minutes_price int,
+    last_four_minutes_volume int,
+    last_five_minutes_price int,
+    last_five_minutes_volume int,
+    next_one_minute_price int,
+    next_five_minutes_price int,
     PRIMARY KEY (ticker, trading_time)
 );
 
-DROP TABLE IF EXISTS stock_price_one_min;
+DROP TABLE IF EXISTS stock_trend_analysis_data;
 
-CREATE TABLE stock_price_one_min (
+CREATE TABLE stock_trend_analysis_data (
     trading_time timestamp,
     ticker text,
     price int,
     volume int,
+    last_one_minute_price int,
+    last_one_minute_volume int,
+    last_two_minutes_price int,
+    last_two_minutes_volume int,
+    last_three_minutes_price int,
+    last_three_minutes_volume int,
+    last_four_minutes_price int,
+    last_four_minutes_volume int,
+    last_five_minutes_price int,
+    last_five_minutes_volume int,
+    next_one_minute_price int,
+    next_five_minutes_price int,
     PRIMARY KEY (ticker, trading_time)
-)
+);
 
-TRUNCATE TABLE stock_price_one_min;
+TRUNCATE TABLE stock_trend_analysis_data;
 

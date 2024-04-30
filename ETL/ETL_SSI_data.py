@@ -279,10 +279,10 @@ def extract_intraday_stock_data(exchange_list: list):
     print("Insert intraday stock data of Vietnam Stock Market successfully!")
 
 
-def aggregate_intraday_stock_data(ticker_df: pd.DataFrame, ticker: str):    
-    '''
+def aggregate_intraday_stock_data(ticker_df: pd.DataFrame, ticker: str):
+    """
         Function to aggregate the intraday stock data
-    '''
+    """
     ticker_df['time'] = pd.to_datetime(ticker_df['time'])
 
     ticker_df.set_index('time', inplace=True)

@@ -7,3 +7,5 @@ SQLAlchemy>=2.0.25
 bs4>=0.0.2
 ssi_fc_data>=2.2.1
 vnstock_data>=0.0.1
+pyspark>=3.5.1
+pyarrow>=16.0.0
