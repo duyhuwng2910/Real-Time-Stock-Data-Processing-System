@@ -16,54 +16,13 @@ spark_conn = SparkSession.builder \
 
 spark_conn.sparkContext.setLogLevel("ERROR")
 
-
-def write_to_real_time_table(df, epoc_id):
-    try:
-        df.write \
-            .format("org.apache.spark.sql.cassandra") \
-            .options(table="real_time_stock_trading_data", keyspace="vietnam_stock") \
-            .mode("append") \
-            .save()
-            
-        print("Write successfully!")
-    except Exception as e:
-        print(f"Error while writing to Cassandra:{e}")
+trend_analysis_df = spark_conn.read \
+    .format("org.apache.spark.sql.cassandra") \
+    .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
+    .load()
 
 
-def write_to_aggregation_table(df, epoc_id):
-    try:
-        df.write \
-            .format("org.apache.spark.sql.cassandra") \
-            .options(table="aggregated_stock_trading_data", keyspace="vietnam_stock") \
-            .mode("append") \
-            .save()
-
-        print("Aggregate successfully!")
-    except Exception as e:
-        print(f"Error while aggregating to Cassandra:{e}")
-
-
-def run_spark_job():
-    df = spark_conn \
-        .readStream \
-        .format("kafka") \
-        .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
-        .option("subscribe", kafka_topic_name) \
-        .option("startingOffsets", "earliest") \
-        .load()
-
-    print("Schema of the dataframe: ")
-
-    df.printSchema()
-
-    time.sleep(1)
-
-    json_df = df.selectExpr("offset", "CAST(value AS STRING)")
-
-    print("Schema of the json dataframe: ")
-
-    json_df.printSchema()
-
+def process_real_time_stock_trading_data(json_df):
     json_schema = (StructType()
                    .add("RType", StringType(), False)
                    .add("TradingDate", StringType(), False)
@@ -79,19 +38,17 @@ def run_spark_job():
     stock_df = json_df.select(json_df['offset'], from_json(col("value"), json_schema).alias("data")).selectExpr(
         "offset", "data.*")
 
-    stock_df1 = stock_df.withColumn("TradingDate", to_date(stock_df['TradingDate'], "dd/MM/yyyy"))
+    stock_df = stock_df.withColumn("TradingDate", to_date(stock_df['TradingDate'], "dd/MM/yyyy"))
 
-    stock_df1 = stock_df1.withColumn("trading_time",
-                                     concat_ws(" ", stock_df1['TradingDate'], stock_df['Time'])
-                                     )
+    stock_df = stock_df.withColumn("trading_time",
+                                   concat_ws(" ", stock_df['TradingDate'], stock_df['Time'])
+                                   )
 
-    stock_df1 = stock_df1.withColumn("trading_time", col("trading_time").cast(TimestampType()))
+    stock_df = stock_df.withColumn("trading_time", col("trading_time").cast(TimestampType()))
 
-    stock_df1 = stock_df1.withColumn("trading_time", date_format(stock_df1['trading_time'], "yyyy-MM-dd HH:mm:ss"))
+    stock_df = stock_df.withColumn("trading_time", date_format(stock_df['trading_time'], "yyyy-MM-dd HH:mm:ss"))
 
-    stock_df1.printSchema()
-
-    stock_df1 = stock_df1.withColumnRenamed("Symbol", "ticker") \
+    stock_df = stock_df.withColumnRenamed("Symbol", "ticker") \
         .withColumnRenamed("Open", "open") \
         .withColumnRenamed("High", "high") \
         .withColumnRenamed("Low", "low") \
@@ -99,30 +56,23 @@ def run_spark_job():
         .withColumnRenamed("Volume", "volume") \
         .withColumnRenamed("offset", "id")
 
-    real_time_stock_df = stock_df1.select('id', 'trading_time', 'ticker', 'open', 'high', 'low', 'close', 'volume')
+    return stock_df
 
-    aggregation_df = stock_df1.withColumn("trading_time", date_format("trading_time", "yyyy-MM-dd HH:mm:00"))
 
-    aggregation_df = aggregation_df.withColumn("trading_time", to_timestamp("trading_time", "yyyy-MM-dd HH:mm:ss"))
-
-    time.sleep(1)
-
-    print("Schema of aggregation data frame:")
-
-    aggregation_df.printSchema()
-
+def run_aggregation_task(aggregation_df):
     aggregation_df = aggregation_df \
         .withWatermark("trading_time", "5 minutes") \
         .groupBy(
-        col("ticker"),
-        window("trading_time", "1 minute", "1 minute")) \
+             col("ticker"),
+             window("trading_time", "1 minute", "1 minute")
+             ) \
         .agg(
-        first("open").alias("open"),
-        max("high").alias("high"),
-        min("low").alias("low"),
-        last("close").alias("close"),
-        sum("volume").alias("volume")
-    )
+            first("open").alias("open"),
+            max("high").alias("high"),
+            min("low").alias("low"),
+            last("close").alias("close"),
+            sum("volume").alias("volume")
+        )
 
     aggregation_df1 = aggregation_df.select(
         col("window.start").alias("start_time"),
@@ -134,6 +84,85 @@ def run_spark_job():
         'close',
         'volume'
     )
+
+    return aggregation_df1
+
+
+def write_to_real_time_table(df, epoc_id):
+    try:
+        df.write \
+            .format("org.apache.spark.sql.cassandra") \
+            .options(table="real_time_stock_trading_data", keyspace="vietnam_stock") \
+            .mode("append") \
+            .save()
+
+        print("Write real time stock trading to Cassandra table successfully!")
+    except Exception as e:
+        print(f"Error while writing to Cassandra:{e}")
+
+
+def write_to_aggregation_table(df, epoc_id):
+    try:
+        df.write \
+            .format("org.apache.spark.sql.cassandra") \
+            .options(table="aggregated_stock_trading_data", keyspace="vietnam_stock") \
+            .mode("append") \
+            .save()
+
+        print("Aggregate stock data successfully!")
+    except Exception as e:
+        print(f"Error while aggregating to Cassandra:{e}")
+
+
+def write_to_trend_analysis_table(df, epoc_id):
+    try:
+        df.write \
+            .format("org.apache.spark.sql.cassandra") \
+            .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
+            .mode("append") \
+            .save()
+
+        print("Analyze trend of stock price successfully!")
+    except Exception as e:
+        print(f"Error while analyzing to Cassandra:{e}")
+
+
+def run_spark_job():
+    df = spark_conn \
+        .readStream \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
+        .option("subscribe", kafka_topic_name) \
+        .option("startingOffsets", "earliest") \
+        .load()
+
+    print("Schema of the dataframe: ")
+
+    df.printSchema()
+
+    json_df = df.selectExpr("offset", "CAST(value AS STRING)")
+
+    time.sleep(1)
+
+    print("Schema of the json dataframe: ")
+
+    json_df.printSchema()
+
+    stock_df = process_real_time_stock_trading_data(json_df)
+
+    real_time_stock_df = stock_df.select('id', 'trading_time', 'ticker', 'open', 'high', 'low', 'close', 'volume')
+
+    aggregation_df = stock_df.withColumn("trading_time", date_format("trading_time", "yyyy-MM-dd HH:mm:00"))
+
+    aggregation_df = aggregation_df.withColumn("trading_time", to_timestamp("trading_time", "yyyy-MM-dd HH:mm:ss"))
+
+    time.sleep(1)
+
+    print("Schema of aggregation data frame:")
+
+    aggregation_df.printSchema()
+
+    aggregation_df1 = run_aggregation_task(aggregation_df)
 
     real_time_table = real_time_stock_df.writeStream \
         .trigger(processingTime="3 seconds") \
