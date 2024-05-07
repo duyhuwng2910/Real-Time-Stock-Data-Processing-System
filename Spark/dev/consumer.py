@@ -19,6 +19,10 @@ spark_conn = SparkSession.builder \
 
 spark_conn.sparkContext.setLogLevel("ERROR")
 
+one_minute_model = LinearRegressionModel.load("Model/oneMinuteModel")
+
+five_minutes_model = LinearRegressionModel.load("Model/fiveMinutesModel")
+
 trend_analysis_df = spark_conn.read \
     .format("org.apache.spark.sql.cassandra") \
     .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
@@ -35,10 +39,6 @@ column_list = ['last_one_minute_price', 'last_one_minute_volume', 'last_two_minu
                'last_two_minutes_volume', 'last_three_minutes_price', 'last_three_minutes_volume',
                'last_four_minutes_price', 'last_four_minutes_volume', 'last_five_minutes_price',
                'last_five_minutes_volume']
-
-one_minute_model = LinearRegressionModel.read().load("one_minute_model/")
-
-five_minutes_model = LinearRegressionModel.read().load("five_minutes_model/")
 
 
 def process_real_time_stock_trading_data(json_df):

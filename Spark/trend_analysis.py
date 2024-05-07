@@ -180,14 +180,14 @@ def main():
     print(evaluation_df)
 
     try:
-        one_min_model.write().overwrite().save("one_minute_model")
+        one_min_model.write().overwrite().save("Model/oneMinuteModel/")
 
         print("One minute model is saved sucessfully!")
     except Exception as e:
         print(f"Error while saving one minute model:{e}")
 
     try:
-        five_mins_model.write().overwrite().save("five_minutes_model")
+        five_mins_model.write().overwrite().save("Model/fiveMinutesModel/")
 
         print("Five minutes model is saved sucessfully!")
     except Exception as e:

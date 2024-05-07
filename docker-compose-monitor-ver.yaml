@@ -25,10 +25,13 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
     volumes:
-      - spark_master:/bitnami
+      - spark_master:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
+      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
+      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
+      - ./Model:/opt/bitnami/spark/Model
     restart: always
 
   spark-worker-1:
@@ -54,10 +57,13 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
     volumes:
-      - spark_worker_1:/bitnami
+      - spark_worker_1:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
+      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
+      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
+      - ./Model:/opt/bitnami/spark/Model
     deploy:
       resources:
         limits:
@@ -88,10 +94,13 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
     volumes:
-      - spark_worker_2:/bitnami
+      - spark_worker_2:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
+      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
+      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
+      - ./Model:/opt/bitnami/spark/Model
     deploy:
       resources:
         limits:
@@ -123,10 +132,13 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
     volumes:
-      - spark_worker_3:/bitnami
+      - spark_worker_3:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
+      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
+      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
+      - ./Model:/opt/bitnami/spark/Model
     deploy:
       resources:
         limits:
