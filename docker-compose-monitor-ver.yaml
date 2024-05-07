@@ -27,6 +27,8 @@ services:
     volumes:
       - spark_master:/bitnami
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
     restart: always
 
   spark-worker-1:
@@ -54,6 +56,8 @@ services:
     volumes:
       - spark_worker_1:/bitnami
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
     deploy:
       resources:
         limits:
@@ -68,6 +72,7 @@ services:
       - graduation-thesis
     depends_on:
       - spark-master
+      - spark-worker-1
     ports:
       - '28080:8080'
       - '7079:7077'
@@ -85,6 +90,8 @@ services:
     volumes:
       - spark_worker_2:/bitnami
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
     deploy:
       resources:
         limits:
@@ -99,6 +106,8 @@ services:
       - graduation-thesis
     depends_on:
       - spark-master
+      - spark-worker-1
+      - spark-worker-2
     ports:
       - '38080:8080'
       - '7080:7077'
@@ -116,6 +125,8 @@ services:
     volumes:
       - spark_worker_3:/bitnami
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
+      - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
     deploy:
       resources:
         limits:

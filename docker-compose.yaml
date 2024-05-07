@@ -252,7 +252,7 @@ services:
       - SPARK_METRICS_ENABLED=true
     volumes:
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
-      - spark_worker_2:/bitnami
+      - spark_worker_3:/bitnami
     deploy:
       resources:
         limits:

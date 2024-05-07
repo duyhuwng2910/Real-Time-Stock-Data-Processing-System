@@ -1,29 +1,23 @@
-import pyspark.pandas as pd
+import pyspark.pandas as ps_pd
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-
 from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder
 from pyspark.ml.regression import LinearRegression
 from pyspark.ml.evaluation import RegressionEvaluator
 
 from cassandra.cluster import Cluster
 
-# Create Spark Session
-spark_conn = SparkSession.builder \
-    .appName("Real Time Stock Data Analytic Project") \
-    .config("spark.cassandra.connection.host", "cassandra-1") \
-    .config("spark.cassandra.connection.port", "9042") \
-    .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.5.0") \
-    .getOrCreate()
-
-spark_conn.sparkContext.setLogLevel("ERROR")
-
 # Create cluster
-cluster = Cluster(['localhost'], port=9042)
+# cluster = Cluster(['localhost'], port=9042)
+cluster = Cluster(['cassandra-1', 'cassandra-2', 'cassandra-3'], port=9042)
 
 session = cluster.connect()
 
 session.set_keyspace("vietnam_stock")
+
+spark = SparkSession.builder.appName("Linear Regression model building application").getOrCreate()
+
+spark.sparkContext.setLogLevel("ERROR")
 
 
 def pandas_factory(colnames, rows):
@@ -31,7 +25,7 @@ def pandas_factory(colnames, rows):
         Function to get pyspark pandas dataframe
         from a query in Cassandra table
     """
-    return pd.DataFrame(rows, columns=colnames)
+    return ps_pd.DataFrame(rows, columns=colnames)
 
 
 session.row_factory = pandas_factory
@@ -179,21 +173,28 @@ def main():
              'rmse': five_mins_model_evaluation[1],
              'mae': five_mins_model_evaluation[2]}]
 
-    evaluation_df = pd.DataFrame(data)
+    evaluation_df = ps_pd.DataFrame(data)
+
+    print("Evaluate model: ")
+
+    print(evaluation_df)
 
     try:
-        evaluation_df.to_csv('model_evaluation.csv')
+        one_min_model.write().overwrite().save("one_minute_model")
 
-        print("Export successfully!")
+        print("One minute model is saved sucessfully!")
     except Exception as e:
-        print(f"Error while exporting csv file: {e}")
+        print(f"Error while saving one minute model:{e}")
 
-    one_min_prediction.select("features", "next_one_minute_price", "prediction").show(5)
+    try:
+        five_mins_model.write().overwrite().save("five_minutes_model")
 
-    five_mins_prediction.select("features", "next_five_minutes_price", "prediction").show(5)
+        print("Five minutes model is saved sucessfully!")
+    except Exception as e:
+        print(f"Error while saving five minutes model:{e}")
 
-    # Stop the spark application
-    spark_conn.stop()
+    # Stop spark session
+    spark.stop()
 
 
 if __name__ == "__main__":

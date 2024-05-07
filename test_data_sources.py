@@ -4,14 +4,14 @@ import sys
 
 import vnstock_data
 import vnstock
-
 import pandas as pd
-from pyspark.sql import SparkSession
+import pyspark.pandas as pspd
+from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import *
 
-spark = SparkSession.builder.appName("test").getOrCreate()
-
-spark.sparkContext.setLogLevel("ERROR")
+# spark = SparkSession.builder.appName("test").getOrCreate()
+#
+# spark.sparkContext.setLogLevel("ERROR")
 
 # Uncomment if you use Windows
 # sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
@@ -23,22 +23,17 @@ import config
 
 client = vnstock_data.ssi.fc_md_client.MarketDataClient(config)
 
-stream_df = spark.read.csv("intraday.csv", header=True, inferSchema=True)
+# ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN30', page=1, pageSize=100)
 
-ml_df = spark.read.csv("stock_data.csv", header=True, inferSchema=True).limit(5)
+today = datetime.date.today()
 
-columns = [
-            'last_one_minute_price', 'last_one_minute_volume', 'last_two_minutes_price',
-            'last_two_minutes_volume', 'last_three_minutes_price', 'last_three_minutes_volume',
-            'last_four_minutes_price', 'last_four_minutes_volume', 'last_five_minutes_price',
-            'last_five_minutes_volume', 'next_one_minute_price', 'next_five_minutes_price'
-         ]
+intraday_data = vnstock_data.stock_historical_data(symbol='SSI',
+                                                   start_date='2024-01-01',
+                                                   end_date='2024-01-30',
+                                                   resolution='1',
+                                                   type='stock',
+                                                   beautify=True,
+                                                   decor=False,
+                                                   source='SSI')
 
-for column in columns:
-    stream_df = stream_df.withColumn(column, lit(0))
-
-combined_df = ml_df.union(stream_df)
-
-print(combined_df.head(5))
-
-spark.stop()
+print(intraday_data.head(5))

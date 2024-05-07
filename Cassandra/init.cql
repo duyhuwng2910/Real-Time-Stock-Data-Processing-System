@@ -24,10 +24,10 @@ CREATE TABLE aggregated_stock_trading_data (
     start_time timestamp,
     end_time timestamp,
     ticker text,
-    close int,
+    open int,
     high int,
     low int,
-    open int,
+    close int,
     volume int,
     PRIMARY KEY (ticker, start_time)
 );

@@ -49,25 +49,29 @@ def insert_vn_30_list():
 
 
 def extract_machine_learning_data():
-    print("Starting to extract the stock data of VN30 ticker list since 01-04-2024 for machine learning purpose")
+    print("Starting to extract the stock data of VN30 ticker list since 01-03-2024 for machine learning purpose")
 
     session.execute("TRUNCATE TABLE stock_data_for_ml;")
 
+    session.execute("TRUNCATE TABLE stock_trend_analysis_data;")
+
     for ticker in ticker_df['StockSymbol']:
         intraday_data = vnstock_data.stock_historical_data(symbol=ticker,
-                                                           start_date='2024-04-01',
+                                                           start_date='2024-03-01',
                                                            end_date=str(today),
                                                            resolution='1',
                                                            type='stock',
                                                            beautify=True,
                                                            decor=False,
-                                                           source='SSI')
+                                                           source='DNSE')
 
         ticker_data = intraday_data[['time', 'ticker', 'close', 'volume']]
 
         ticker_data = ticker_data.rename(columns={"time": "trading_time", "close": "price"})
 
-        ticker_data['trading_time'] = ticker_data['trading_time'].dt.round(freq='min')
+        ticker_data['trading_time'] = pd.to_datetime(ticker_data['trading_time'])
+
+        ticker_data['trading_time'] = ticker_data['trading_time'].dt.ceil(freq='min')
 
         length = len(ticker_data)
 
@@ -231,7 +235,7 @@ def extract_machine_learning_data():
 
                 session.execute(insert_ta_statement, values)
 
-            print(f"Insert data for stock analysis completely!")
+            print(f"Insert data of {ticker} for stock analysis completely!")
 
         except Exception as err:
             print("Error while inserting row:", err)

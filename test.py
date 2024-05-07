@@ -1,5 +1,5 @@
 import pandas as pd
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
@@ -11,98 +11,67 @@ spark = SparkSession.builder.appName("linear regression test").getOrCreate()
 
 spark.sparkContext.setLogLevel("ERROR")
 
-stock_data = spark.read.csv('stock_data.csv', header=True, inferSchema=True)
+ml_df = spark.read.csv("stock_data.csv", header=True, inferSchema=True)
 
-# Preprocess timestamp features
-stock_data = stock_data.withColumn("hour", hour(col("time"))) \
-                        .withColumn("minute", minute(col("time")))
+ml_df = ml_df.select("trading_time", "ticker", "price", "volume",
+                     "last_one_minute_price", "last_one_minute_volume",
+                     "last_two_minutes_price", "last_two_minutes_volume",
+                     "last_three_minutes_price", "last_three_minutes_volume",
+                     "last_four_minutes_price", "last_four_minutes_volume",
+                     "last_five_minutes_price", "last_five_minutes_volume")
 
-# Create StringIndexer for column 'ticker'
-# string_indexer = StringIndexer(inputCol="ticker", outputCol="ticker_index")
-#
-# stock_data = string_indexer.fit(stock_data).transform(stock_data)
-#
-# onehot_encoder = OneHotEncoder(inputCols=["ticker_index"], outputCols=["ticker_encoded"])
-#
-# stock_data = onehot_encoder.fit(stock_data).transform(stock_data)
+stream_df = spark.read.csv("intraday.csv", header=True, inferSchema=True)
 
-assembler = VectorAssembler(inputCols=[
-    'hour', 'minute', 'price', 'volume',
-    'last_one_minute_price', 'last_one_minute_volume', 'last_two_minutes_price',
-    'last_two_minutes_volume', 'last_three_minutes_price', 'last_three_minutes_volume',
-    'last_four_minutes_price', 'last_four_minutes_volume', 'last_five_minutes_price',
-    'last_five_minutes_volume'],
-    outputCol='features')
+stream_df = stream_df.select("trading_time", "ticker", "price", "volume",
+                             "last_one_minute_price", "last_one_minute_volume",
+                             "last_two_minutes_price", "last_two_minutes_volume",
+                             "last_three_minutes_price", "last_three_minutes_volume",
+                             "last_four_minutes_price", "last_four_minutes_volume",
+                             "last_five_minutes_price", "last_five_minutes_volume")
 
-stock_transformed_data = assembler.transform(stock_data)
+df = ml_df.union(stream_df)
 
-(training_data, testing_data) = stock_transformed_data.randomSplit([0.8, 0.2], seed=42)
+window = Window.partitionBy("ticker").orderBy(desc("trading_time"))
 
-one_min_lr = LinearRegression(featuresCol="features", labelCol="next_one_minute_price")
+df = df.withColumn("row_number", row_number().over(window))
 
-five_mins_lr = LinearRegression(featuresCol="features", labelCol="next_five_minutes_price")
+df1 = df.where(col("row_number") <= 6)
 
-one_min_model = one_min_lr.fit(training_data)
+df1 = df1.orderBy("ticker", "trading_time")
 
-five_mins_model = five_mins_lr.fit(training_data)
+df1 = df1 \
+    .withColumn("last_one_minute_price",
+                when(col("row_number") == 1, lag("price", -1).over(window))
+                .otherwise(col("last_one_minute_price"))) \
+    .withColumn("last_one_minute_volume",
+                when(col("row_number") == 1, lag("volume", -1).over(window))
+                .otherwise(col("last_one_minute_volume"))) \
+    .withColumn("last_two_minutes_price",
+                when(col("row_number") == 1, lag("price", -2).over(window))
+                .otherwise(col("last_two_minutes_price"))) \
+    .withColumn("last_two_minutes_volume",
+                when(col("row_number") == 1, lag("volume", -2).over(window))
+                .otherwise(col("last_two_minutes_volume"))) \
+    .withColumn("last_three_minutes_price",
+                when(col("row_number") == 1, lag("price", -3).over(window))
+                .otherwise(col("last_three_minutes_price"))) \
+    .withColumn("last_three_minutes_volume",
+                when(col("row_number") == 1, lag("volume", -3).over(window))
+                .otherwise(col("last_three_minutes_volume"))) \
+    .withColumn("last_four_minutes_price",
+                when(col("row_number") == 1, lag("price", -4).over(window))
+                .otherwise(col("last_four_minutes_price"))) \
+    .withColumn("last_four_minutes_volume",
+                when(col("row_number") == 1, lag("volume", -4).over(window))
+                .otherwise(col("last_four_minutes_volume"))) \
+    .withColumn("last_five_minutes_price",
+                when(col("row_number") == 1, lag("price", -5).over(window))
+                .otherwise(col("last_five_minutes_price"))) \
+    .withColumn("last_five_minutes_volume",
+                when(col("row_number") == 1, lag("volume", -5).over(window))
+                .otherwise(col("last_five_minutes_volume"))) \
+    .orderBy("ticker", "trading_time")
 
-"""
-    Evaluate the model
-"""
+df1.show()
 
-one_min_prediction = one_min_model.transform(testing_data)
-
-five_mins_prediction = five_mins_model.transform(testing_data)
-
-"""
-    For predicting stock index in next one minute
-"""
-
-one_min_evaluator_r2 = RegressionEvaluator(labelCol="next_one_minute_price", predictionCol="prediction", metricName="r2")
-
-one_min_r2 = one_min_evaluator_r2.evaluate(one_min_prediction)
-
-one_min_evaluator_rmse = RegressionEvaluator(labelCol="next_one_minute_price", predictionCol="prediction", metricName="rmse")
-
-one_min_rmse = one_min_evaluator_rmse.evaluate(one_min_prediction)
-
-one_min_evaluator_mae = RegressionEvaluator(labelCol="next_one_minute_price", predictionCol="prediction", metricName="mae")
-
-one_min_mae = one_min_evaluator_mae.evaluate(one_min_prediction)
-
-"""
-    For predicting stock index in next one minute
-"""
-
-five_mins_evaluator_r2 = RegressionEvaluator(labelCol="next_five_minutes_price", predictionCol="prediction", metricName="r2")
-
-five_mins_r2 = five_mins_evaluator_r2.evaluate(five_mins_prediction)
-
-five_mins_evaluator_rmse = RegressionEvaluator(labelCol="next_five_minutes_price", predictionCol="prediction", metricName="rmse")
-
-five_mins_rmse = five_mins_evaluator_rmse.evaluate(five_mins_prediction)
-
-five_mins_evaluator_mae = RegressionEvaluator(labelCol="next_five_minutes_price", predictionCol="prediction", metricName="mae")
-
-five_mins_mae = five_mins_evaluator_mae.evaluate(five_mins_prediction)
-
-data = [{'model': 'next one minute price prediction', 'r2': one_min_r2, 'rmse': one_min_rmse, 'mae': one_min_mae},
-        {'model': 'next five minutes price prediction', 'r2': five_mins_r2, 'rmse': five_mins_rmse,
-         'mae': five_mins_mae}]
-
-# evaluation_df = pd.DataFrame(data)
-
-# try:
-#     evaluation_df.to_csv('model_evaluation.csv')
-#
-#     print("Export successfully!")
-# except Exception as e:
-#     print(f"Error while exporting csv file: {e}")
-
-# print(stock_data.head(2))
-
-# one_min_prediction.select("features", "next_one_minute_price", "prediction").show(5)
-#
-# five_mins_prediction.select("features", "next_five_minutes_price", "prediction").show(5)
-
-print(testing_data.dtypes)
+spark.stop()
