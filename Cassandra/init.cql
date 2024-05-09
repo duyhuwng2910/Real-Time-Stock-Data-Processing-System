@@ -34,14 +34,14 @@ CREATE TABLE aggregated_stock_trading_data (
 
 TRUNCATE TABLE aggregated_stock_trading_data;
 
-DROP TABLE IF EXISTS vn30_list;
+DROP TABLE IF EXISTS stock_list;
 
-CREATE TABLE vn30_list (
+CREATE TABLE stock_list (
     ticker text,
     PRIMARY KEY (ticker)
 );
 
-TRUNCATE TABLE vn30_list;
+TRUNCATE TABLE stock_list;
 
 DROP TABLE IF EXISTS stock_data_for_ml;
 
@@ -50,17 +50,6 @@ CREATE TABLE stock_data_for_ml (
     ticker text,
     price int,
     volume int,
-    last_one_minute_price int,
-    last_one_minute_volume int,
-    last_two_minutes_price int,
-    last_two_minutes_volume int,
-    last_three_minutes_price int,
-    last_three_minutes_volume int,
-    last_four_minutes_price int,
-    last_four_minutes_volume int,
-    last_five_minutes_price int,
-    last_five_minutes_volume int,
-    next_one_minute_price int,
     next_five_minutes_price int,
     PRIMARY KEY (ticker, trading_time)
 );
@@ -72,17 +61,6 @@ CREATE TABLE stock_trend_analysis_data (
     ticker text,
     price int,
     volume int,
-    last_one_minute_price int,
-    last_one_minute_volume int,
-    last_two_minutes_price int,
-    last_two_minutes_volume int,
-    last_three_minutes_price int,
-    last_three_minutes_volume int,
-    last_four_minutes_price int,
-    last_four_minutes_volume int,
-    last_five_minutes_price int,
-    last_five_minutes_volume int,
-    next_one_minute_price int,
     next_five_minutes_price int,
     PRIMARY KEY (ticker, trading_time)
 );

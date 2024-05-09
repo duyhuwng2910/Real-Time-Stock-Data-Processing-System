@@ -28,13 +28,14 @@ ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN30', p
 
 today = datetime.date.today()
 
+start_date = today - datetime.timedelta(days=90)
 
 def insert_vn_30_list():
     print("Starting to get the list of VN30")
 
-    session.execute("TRUNCATE TABLE vn30_list;")
+    session.execute("TRUNCATE TABLE stock_list;")
 
-    insert_statement = session.prepare("INSERT INTO vn30_list (ticker) VALUES (?)")
+    insert_statement = session.prepare("INSERT INTO stock_list (ticker) VALUES (?)")
 
     try:
         for row in ticker_df.itertuples(index=False):
@@ -57,7 +58,7 @@ def extract_machine_learning_data():
 
     for ticker in ticker_df['StockSymbol']:
         intraday_data = vnstock_data.stock_historical_data(symbol=ticker,
-                                                           start_date='2024-03-01',
+                                                           start_date=str(start_date),
                                                            end_date=str(today),
                                                            resolution='1',
                                                            type='stock',
@@ -76,124 +77,19 @@ def extract_machine_learning_data():
         length = len(ticker_data)
 
         new_cols = {
-            'last_one_minute_price': 0,
-            'last_one_minute_volume': 0,
-            'last_two_minutes_price': 0,
-            'last_two_minutes_volume': 0,
-            'last_three_minutes_price': 0,
-            'last_three_minutes_volume': 0,
-            'last_four_minutes_price': 0,
-            'last_four_minutes_volume': 0,
-            'last_five_minutes_price': 0,
-            'last_five_minutes_volume': 0,
-            'next_one_minute_price': 0,
             'next_five_minutes_price': 0
         }
 
         ticker_data = ticker_data.assign(**new_cols)
 
-        for i in ticker_data.index:
-            if i == 0:
-                ticker_data.loc[i, "next_one_minute_price"] = ticker_data.loc[i + 1, "price"]
-                ticker_data.loc[i, "next_five_minutes_price"] = ticker_data.loc[i + 5, "price"]
-
-            elif i == 1:
-                ticker_data.loc[i, "last_one_minute_price"] = ticker_data.loc[i - 1, "price"]
-                ticker_data.loc[i, "last_one_minute_volume"] = ticker_data.loc[i - 1, "volume"]
-
-                ticker_data.loc[i, "next_one_minute_price"] = ticker_data.loc[i + 1, "price"]
-                ticker_data.loc[i, "next_five_minutes_price"] = ticker_data.loc[i + 5, "price"]
-
-            elif i == 2:
-                ticker_data.loc[i, "last_one_minute_price"] = ticker_data.loc[i - 1, "price"]
-                ticker_data.loc[i, "last_one_minute_volume"] = ticker_data.loc[i - 1, "volume"]
-                ticker_data.loc[i, "last_two_minutes_price"] = ticker_data.loc[i - 2, "price"]
-                ticker_data.loc[i, "last_two_minutes_volume"] = ticker_data.loc[i - 2, "volume"]
-
-                ticker_data.loc[i, "next_one_minute_price"] = ticker_data.loc[i + 1, "price"]
-                ticker_data.loc[i, "next_five_minutes_price"] = ticker_data.loc[i + 5, "price"]
-
-            elif i == 3:
-                ticker_data.loc[i, "last_one_minute_price"] = ticker_data.loc[i - 1, "price"]
-                ticker_data.loc[i, "last_one_minute_volume"] = ticker_data.loc[i - 1, "volume"]
-                ticker_data.loc[i, "last_two_minutes_price"] = ticker_data.loc[i - 2, "price"]
-                ticker_data.loc[i, "last_two_minutes_volume"] = ticker_data.loc[i - 2, "volume"]
-                ticker_data.loc[i, "last_three_minutes_price"] = ticker_data.loc[i - 3, "price"]
-                ticker_data.loc[i, "last_three_minutes_volume"] = ticker_data.loc[i - 3, "volume"]
-
-                ticker_data.loc[i, "next_one_minute_price"] = ticker_data.loc[i + 1, "price"]
-                ticker_data.loc[i, "next_five_minutes_price"] = ticker_data.loc[i + 5, "price"]
-
-            elif i == 4:
-                ticker_data.loc[i, "last_one_minute_price"] = ticker_data.loc[i - 1, "price"]
-                ticker_data.loc[i, "last_one_minute_volume"] = ticker_data.loc[i - 1, "volume"]
-                ticker_data.loc[i, "last_two_minutes_price"] = ticker_data.loc[i - 2, "price"]
-                ticker_data.loc[i, "last_two_minutes_volume"] = ticker_data.loc[i - 2, "volume"]
-                ticker_data.loc[i, "last_three_minutes_price"] = ticker_data.loc[i - 3, "price"]
-                ticker_data.loc[i, "last_three_minutes_volume"] = ticker_data.loc[i - 3, "volume"]
-                ticker_data.loc[i, "last_four_minutes_price"] = ticker_data.loc[i - 4, "price"]
-                ticker_data.loc[i, "last_four_minutes_volume"] = ticker_data.loc[i - 4, "volume"]
-
-                ticker_data.loc[i, "next_one_minute_price"] = ticker_data.loc[i + 1, "price"]
-                ticker_data.loc[i, "next_five_minutes_price"] = ticker_data.loc[i + 5, "price"]
-
-            elif length - 5 <= i < length - 1:
-                ticker_data.loc[i, "last_one_minute_price"] = ticker_data.loc[i - 1, "price"]
-                ticker_data.loc[i, "last_one_minute_volume"] = ticker_data.loc[i - 1, "volume"]
-                ticker_data.loc[i, "last_two_minutes_price"] = ticker_data.loc[i - 2, "price"]
-                ticker_data.loc[i, "last_two_minutes_volume"] = ticker_data.loc[i - 2, "volume"]
-                ticker_data.loc[i, "last_three_minutes_price"] = ticker_data.loc[i - 3, "price"]
-                ticker_data.loc[i, "last_three_minutes_volume"] = ticker_data.loc[i - 3, "volume"]
-                ticker_data.loc[i, "last_four_minutes_price"] = ticker_data.loc[i - 4, "price"]
-                ticker_data.loc[i, "last_four_minutes_volume"] = ticker_data.loc[i - 4, "volume"]
-                ticker_data.loc[i, "last_five_minutes_price"] = ticker_data.loc[i - 5, "price"]
-                ticker_data.loc[i, "last_five_minutes_volume"] = ticker_data.loc[i - 5, "volume"]
-
-                ticker_data.loc[i, "next_one_minute_price"] = ticker_data.loc[i + 1, "price"]
-
-            elif i == length - 1:
-                ticker_data.loc[i, "last_one_minute_price"] = ticker_data.loc[i - 1, "price"]
-                ticker_data.loc[i, "last_one_minute_volume"] = ticker_data.loc[i - 1, "volume"]
-                ticker_data.loc[i, "last_two_minutes_price"] = ticker_data.loc[i - 2, "price"]
-                ticker_data.loc[i, "last_two_minutes_volume"] = ticker_data.loc[i - 2, "volume"]
-                ticker_data.loc[i, "last_three_minutes_price"] = ticker_data.loc[i - 3, "price"]
-                ticker_data.loc[i, "last_three_minutes_volume"] = ticker_data.loc[i - 3, "volume"]
-                ticker_data.loc[i, "last_four_minutes_price"] = ticker_data.loc[i - 4, "price"]
-                ticker_data.loc[i, "last_four_minutes_volume"] = ticker_data.loc[i - 4, "volume"]
-                ticker_data.loc[i, "last_five_minutes_price"] = ticker_data.loc[i - 5, "price"]
-                ticker_data.loc[i, "last_five_minutes_volume"] = ticker_data.loc[i - 5, "volume"]
-
-            else:
-                ticker_data.loc[i, "last_one_minute_price"] = ticker_data.loc[i - 1, "price"]
-                ticker_data.loc[i, "last_one_minute_volume"] = ticker_data.loc[i - 1, "volume"]
-                ticker_data.loc[i, "last_two_minutes_price"] = ticker_data.loc[i - 2, "price"]
-                ticker_data.loc[i, "last_two_minutes_volume"] = ticker_data.loc[i - 2, "volume"]
-                ticker_data.loc[i, "last_three_minutes_price"] = ticker_data.loc[i - 3, "price"]
-                ticker_data.loc[i, "last_three_minutes_volume"] = ticker_data.loc[i - 3, "volume"]
-                ticker_data.loc[i, "last_four_minutes_price"] = ticker_data.loc[i - 4, "price"]
-                ticker_data.loc[i, "last_four_minutes_volume"] = ticker_data.loc[i - 4, "volume"]
-                ticker_data.loc[i, "last_five_minutes_price"] = ticker_data.loc[i - 5, "price"]
-                ticker_data.loc[i, "last_five_minutes_volume"] = ticker_data.loc[i - 5, "volume"]
-
-                ticker_data.loc[i, "next_one_minute_price"] = ticker_data.loc[i + 1, "price"]
+        for i in range(0, length, 1):
+            if i < length - 5:
                 ticker_data.loc[i, "next_five_minutes_price"] = ticker_data.loc[i + 5, "price"]
 
         insert_ml_statement = session.prepare("""
                                             INSERT INTO stock_data_for_ml 
-                                                (trading_time, ticker, price, volume,
-                                                last_one_minute_price,
-                                                last_one_minute_volume,
-                                                last_two_minutes_price,
-                                                last_two_minutes_volume,
-                                                last_three_minutes_price,
-                                                last_three_minutes_volume,
-                                                last_four_minutes_price,
-                                                last_four_minutes_volume,
-                                                last_five_minutes_price,
-                                                last_five_minutes_volume,
-                                                next_one_minute_price,
-                                                next_five_minutes_price)
-                                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                                (trading_time, ticker, price, volume, next_five_minutes_price)
+                                            VALUES (?,?,?,?,?)
                                            """)
 
         # Iterate through DataFrame rows and insert values
@@ -204,38 +100,6 @@ def extract_machine_learning_data():
                 session.execute(insert_ml_statement, values)
 
             print(f"Insert intraday data of {ticker} completely!")
-
-        except Exception as err:
-            print("Error while inserting row:", err)
-
-        stock_trend_analysis_data = ticker_data.tail(5)
-
-        insert_ta_statement = session.prepare("""
-                                            INSERT INTO stock_trend_analysis_data 
-                                                (trading_time, ticker, price, volume,
-                                                last_one_minute_price,
-                                                last_one_minute_volume,
-                                                last_two_minutes_price,
-                                                last_two_minutes_volume,
-                                                last_three_minutes_price,
-                                                last_three_minutes_volume,
-                                                last_four_minutes_price,
-                                                last_four_minutes_volume,
-                                                last_five_minutes_price,
-                                                last_five_minutes_volume,
-                                                next_one_minute_price,
-                                                next_five_minutes_price)
-                                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-                                           """)
-
-        # Iterate through DataFrame rows and insert values
-        try:
-            for row in stock_trend_analysis_data.itertuples(index=False):
-                values = tuple(row)  # Convert DataFrame row to tuple
-
-                session.execute(insert_ta_statement, values)
-
-            print(f"Insert data of {ticker} for stock analysis completely!")
 
         except Exception as err:
             print("Error while inserting row:", err)

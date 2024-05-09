@@ -27,13 +27,15 @@ client = vnstock_data.ssi.fc_md_client.MarketDataClient(config)
 
 today = datetime.date.today()
 
+start_date = today - datetime.timedelta(days=90)
+
 intraday_data = vnstock_data.stock_historical_data(symbol='SSI',
-                                                   start_date='2024-01-01',
-                                                   end_date='2024-01-30',
+                                                   start_date=str(start_date),
+                                                   end_date=str(today),
                                                    resolution='1',
                                                    type='stock',
                                                    beautify=True,
                                                    decor=False,
-                                                   source='SSI')
+                                                   source='DNSE')
 
-print(intraday_data.head(5))
+print(intraday_data.head(1))

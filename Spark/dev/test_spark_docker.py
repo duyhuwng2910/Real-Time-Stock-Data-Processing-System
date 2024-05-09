@@ -1,4 +1,5 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
 
 spark = SparkSession.builder \
                         .appName("PySpark Job") \
@@ -11,11 +12,11 @@ if __name__ == "__main__":
     #
     # df.show()
 
-    trend_analysis_df = spark.read \
+    ticker_df = spark.read \
         .format("org.apache.spark.sql.cassandra") \
-        .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
+        .options(table="stock_list", keyspace="vietnam_stock") \
         .load()
 
-    trend_analysis_df.show(5)
+    ticker_df = ticker_df.withColumn("ticker_encoded", try_)
 
     spark.stop()

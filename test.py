@@ -29,17 +29,13 @@ stream_df = stream_df.select("trading_time", "ticker", "price", "volume",
                              "last_four_minutes_price", "last_four_minutes_volume",
                              "last_five_minutes_price", "last_five_minutes_volume")
 
-df = ml_df.union(stream_df)
-
 window = Window.partitionBy("ticker").orderBy(desc("trading_time"))
 
-df = df.withColumn("row_number", row_number().over(window))
+stream_df = stream_df.withColumn("row_number", row_number().over(window))
 
-df1 = df.where(col("row_number") <= 6)
+stream_df = stream_df.where(col("row_number") == 1)
 
-df1 = df1.orderBy("ticker", "trading_time")
-
-df1 = df1 \
+stream_df = stream_df \
     .withColumn("last_one_minute_price",
                 when(col("row_number") == 1, lag("price", -1).over(window))
                 .otherwise(col("last_one_minute_price"))) \

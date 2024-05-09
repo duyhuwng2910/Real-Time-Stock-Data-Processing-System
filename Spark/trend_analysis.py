@@ -8,8 +8,11 @@ from pyspark.ml.evaluation import RegressionEvaluator
 from cassandra.cluster import Cluster
 
 # Create cluster
-# cluster = Cluster(['localhost'], port=9042)
-cluster = Cluster(['cassandra-1', 'cassandra-2', 'cassandra-3'], port=9042)
+
+# Uncomment if running in console
+cluster = Cluster(['localhost'], port=9042)
+# Uncomment when run in production
+# cluster = Cluster(['cassandra-1', 'cassandra-2', 'cassandra-3'], port=9042)
 
 session = cluster.connect()
 
@@ -31,42 +34,6 @@ def pandas_factory(colnames, rows):
 session.row_factory = pandas_factory
 
 session.default_fetch_size = 10000000
-
-
-def build_one_minute_linear_regression_model(training_data):
-    one_min_lr = LinearRegression(featuresCol="features", labelCol="next_one_minute_price")
-
-    one_min_model = one_min_lr.fit(training_data)
-
-    return one_min_model
-
-
-def one_minute_prediction(one_min_model, testing_data):
-    one_min_prediction = one_min_model.transform(testing_data)
-
-    return one_min_prediction
-
-
-def evaluate_one_minute_linear_regression_model(one_min_prediction):
-    """
-        Evaluate the model for predicting stock index in next one minute
-    """
-    one_min_evaluator_r2 = RegressionEvaluator(labelCol="next_one_minute_price", predictionCol="prediction",
-                                               metricName="r2")
-
-    one_min_r2 = one_min_evaluator_r2.evaluate(one_min_prediction)
-
-    one_min_evaluator_rmse = RegressionEvaluator(labelCol="next_one_minute_price", predictionCol="prediction",
-                                                 metricName="rmse")
-
-    one_min_rmse = one_min_evaluator_rmse.evaluate(one_min_prediction)
-
-    one_min_evaluator_mae = RegressionEvaluator(labelCol="next_one_minute_price", predictionCol="prediction",
-                                                metricName="mae")
-
-    one_min_mae = one_min_evaluator_mae.evaluate(one_min_prediction)
-
-    return [one_min_r2, one_min_rmse, one_min_mae]
 
 
 def build_five_minutes_linear_regression_model(training_data):
@@ -116,14 +83,7 @@ def main():
 
     ps_df['time'] = ps_df['trading_time'].dt.strftime('%H:%M:%S').astype('str')
 
-    stock_data = ps_df[
-        ['trading_date', 'time', 'ticker', 'price', 'volume',
-         'last_one_minute_price', 'last_one_minute_volume', 'last_two_minutes_price',
-         'last_two_minutes_volume', 'last_three_minutes_price', 'last_three_minutes_volume',
-         'last_four_minutes_price', 'last_four_minutes_volume', 'last_five_minutes_price',
-         'last_five_minutes_volume', 'next_one_minute_price', 'next_five_minutes_price'
-         ]
-    ]
+    stock_data = ps_df[['trading_date', 'time', 'ticker', 'price', 'volume', 'next_five_minutes_price']]
 
     stock_data = stock_data.to_spark()
 
@@ -140,34 +100,19 @@ def main():
 
     stock_data = onehot_encoder.fit(stock_data).transform(stock_data)
 
-    assembler = VectorAssembler(inputCols=[
-        'hour', 'minute', 'price', 'ticker_encoded', 'volume',
-        'last_one_minute_price', 'last_one_minute_volume', 'last_two_minutes_price',
-        'last_two_minutes_volume', 'last_three_minutes_price', 'last_three_minutes_volume',
-        'last_four_minutes_price', 'last_four_minutes_volume', 'last_five_minutes_price',
-        'last_five_minutes_volume'],
-        outputCol='features')
+    assembler = VectorAssembler(inputCols=['hour', 'minute', 'price', 'ticker_encoded', 'volume'], outputCol='features')
 
     stock_transformed_data = assembler.transform(stock_data)
 
     (training_data, testing_data) = stock_transformed_data.randomSplit([0.8, 0.2], seed=42)
 
-    one_min_model = build_one_minute_linear_regression_model(training_data)
-
     five_mins_model = build_five_minutes_linear_regression_model(training_data)
-
-    one_min_prediction = one_minute_prediction(one_min_model, testing_data)
 
     five_mins_prediction = five_minutes_prediction(five_mins_model, testing_data)
 
-    one_min_model_evaluation = evaluate_one_minute_linear_regression_model(one_min_prediction)
-
     five_mins_model_evaluation = evaluate_five_minutes_linear_regression_model(five_mins_prediction)
 
-    data = [{'model': 'next one minute price prediction',
-             'r2': one_min_model_evaluation[0],
-             'rmse': one_min_model_evaluation[1],
-             'mae': one_min_model_evaluation[2]},
+    data = [
             {'model': 'next five minutes price prediction',
              'r2': five_mins_model_evaluation[0],
              'rmse': five_mins_model_evaluation[1],
@@ -180,18 +125,13 @@ def main():
     print(evaluation_df)
 
     try:
-        one_min_model.write().overwrite().save("Model/oneMinuteModel/")
-
-        print("One minute model is saved sucessfully!")
-    except Exception as e:
-        print(f"Error while saving one minute model:{e}")
-
-    try:
         five_mins_model.write().overwrite().save("Model/fiveMinutesModel/")
 
         print("Five minutes model is saved sucessfully!")
     except Exception as e:
         print(f"Error while saving five minutes model:{e}")
+
+    five_mins_prediction.select("price", "next_five_minutes_price", "prediction").limit(10).show()
 
     # Stop spark session
     spark.stop()

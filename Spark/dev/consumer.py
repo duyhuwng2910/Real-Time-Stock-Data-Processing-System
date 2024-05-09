@@ -4,11 +4,12 @@ from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-from pyspark.ml.feature import StringIndexer, OneHotEncoder
+from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler
 from pyspark.ml.regression import LinearRegressionModel
 
 kafka_topic_name = "stock"
 kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094"
+# kafka_bootstrap_servers = "localhost:29093,localhost:29094"
 
 # Create Spark Session
 spark_conn = SparkSession.builder \
@@ -19,26 +20,21 @@ spark_conn = SparkSession.builder \
 
 spark_conn.sparkContext.setLogLevel("ERROR")
 
-one_minute_model = LinearRegressionModel.load("Model/oneMinuteModel")
-
 five_minutes_model = LinearRegressionModel.load("Model/fiveMinutesModel")
 
-trend_analysis_df = spark_conn.read \
+ticker_df = spark_conn.read \
     .format("org.apache.spark.sql.cassandra") \
-    .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
+    .options(table="stock_list", keyspace="vietnam_stock") \
     .load()
 
-trend_analysis_df = trend_analysis_df.select("trading_time", "ticker", "price", "volume",
-                                             "last_one_minute_price", "last_one_minute_volume",
-                                             "last_two_minutes_price", "last_two_minutes_volume",
-                                             "last_three_minutes_price", "last_three_minutes_volume",
-                                             "last_four_minutes_price", "last_four_minutes_volume",
-                                             "last_five_minutes_price", "last_five_minutes_volume")
+# Create StringIndexer for column 'ticker'
+string_indexer = StringIndexer(inputCol="ticker", outputCol="ticker_index")
 
-column_list = ['last_one_minute_price', 'last_one_minute_volume', 'last_two_minutes_price',
-               'last_two_minutes_volume', 'last_three_minutes_price', 'last_three_minutes_volume',
-               'last_four_minutes_price', 'last_four_minutes_volume', 'last_five_minutes_price',
-               'last_five_minutes_volume']
+ticker_df = string_indexer.fit(ticker_df).transform(ticker_df)
+
+onehot_encoder = OneHotEncoder(inputCols=["ticker_index"], outputCols=["ticker_encoded"])
+
+ticker_df = onehot_encoder.fit(ticker_df).transform(ticker_df)
 
 
 def process_real_time_stock_trading_data(json_df):
@@ -81,17 +77,14 @@ def process_real_time_stock_trading_data(json_df):
 def run_aggregation_task(aggregation_df):
     aggregation_df = aggregation_df \
         .withWatermark("trading_time", "5 minutes") \
-        .groupBy(
-        col("ticker"),
-        window("trading_time", "1 minute", "1 minute")
-    ) \
+        .groupBy(col("ticker"), window("trading_time", "1 minute", "1 minute")) \
         .agg(
-        first("open").alias("open"),
-        max("high").alias("high"),
-        min("low").alias("low"),
-        last("close").alias("close"),
-        sum("volume").alias("volume")
-    )
+            first("open").alias("open"),
+            max("high").alias("high"),
+            min("low").alias("low"),
+            last("close").alias("close"),
+            sum("volume").alias("volume")
+        )
 
     aggregation_df1 = aggregation_df.select(
         col("window.start").alias("start_time"),
@@ -105,6 +98,49 @@ def run_aggregation_task(aggregation_df):
     )
 
     return aggregation_df1
+
+
+def pre_processing_stock_data(aggregation_df1):
+    prediction_df = aggregation_df1.select("end_time", "ticker", "close", "volume")
+
+    prediction_df = prediction_df.withColumnRenamed("end_time", "trading_time") \
+        .withColumnRenamed("close", "price")
+
+    prediction_df = prediction_df.withColumn("hour", hour(col("trading_time"))) \
+        .withColumn("minute", minute(col("trading_time")))
+
+    time.sleep(1)
+
+    print("Schema of prediction data frame:")
+
+    prediction_df.printSchema()
+
+    return prediction_df
+
+
+def analyze_trends(prediction_df):
+    prediction_df = prediction_df.join(ticker_df, on=["ticker"], how="inner")
+
+    assembler = VectorAssembler(inputCols=['hour', 'minute', 'price', 'ticker_encoded', 'volume'], outputCol='features')
+
+    prediction_df1 = assembler.transform(prediction_df)
+
+    prediction_df2 = five_minutes_model.transform(prediction_df1)
+
+    prediction_df2 = prediction_df2.withColumnRenamed("prediction", "next_five_minutes_price")
+
+    prediction_df2 = prediction_df2.withColumn("next_five_minutes_price", round("next_five_minutes_price", -1))
+
+    prediction_df2 = prediction_df2.withColumn("next_five_minutes_price",
+                                               prediction_df2.next_five_minutes_price.cast('int'))
+
+    print("Schema of final prediction data frame:")
+
+    prediction_df2.printSchema()
+
+    prediction_df3 = prediction_df2.select("trading_time", "ticker", "price", "volume", "next_five_minutes_price")
+
+    return prediction_df3
 
 
 def write_to_real_time_table(df, epoc_id):
@@ -130,7 +166,7 @@ def write_to_aggregation_table(df, epoc_id):
 
         print("Aggregate stock data successfully!")
     except Exception as e:
-        print(f"Error while aggregating to Cassandra:{e}")
+        print(f"Error while aggregating data to Cassandra table:{e}")
 
 
 def write_to_trend_analysis_table(df, epoc_id):
@@ -143,7 +179,7 @@ def write_to_trend_analysis_table(df, epoc_id):
 
         print("Analyze trend of stock price successfully!")
     except Exception as e:
-        print(f"Error while analyzing to Cassandra:{e}")
+        print(f"Error while inserting analyzed data to Cassandra table:{e}")
 
 
 def run_spark_job():
@@ -183,119 +219,9 @@ def run_spark_job():
 
     aggregation_df1 = run_aggregation_task(aggregation_df)
 
-    prediction_df = aggregation_df1.select("end_time", "ticker", "close", "volume")
+    prediction_df = pre_processing_stock_data(aggregation_df1)
 
-    prediction_df = prediction_df.withColumnRenamed("end_time", "trading_time") \
-        .withColumnRenamed("close", "price")
-
-    for column in column_list:
-        prediction_df = prediction_df.withColumn(column, lit(0))
-
-    prediction_df = trend_analysis_df.union(prediction_df)
-
-    time.sleep(1)
-
-    print("Schema of prediction data frame:")
-
-    prediction_df.printSchema()
-
-    window = Window.partitionBy("ticker").orderBy(desc("trading_time"))
-
-    prediction_df = prediction_df.withColumn("row_number", row_number().over(window)) \
-        .orderBy("ticker", "trading_time")
-
-    prediction_df1 = prediction_df \
-        .withColumn("last_one_minute_price",
-                    when(col("row_number") == 1, lag("price", -1).over(window))
-                    .otherwise(col("last_one_minute_price"))) \
-        .withColumn("last_one_minute_volume",
-                    when(col("row_number") == 1, lag("volume", -1).over(window))
-                    .otherwise(col("last_one_minute_volume"))) \
-        .withColumn("last_two_minutes_price",
-                    when(col("row_number") == 1, lag("price", -2).over(window))
-                    .otherwise(col("last_two_minutes_price"))) \
-        .withColumn("last_two_minutes_volume",
-                    when(col("row_number") == 1, lag("volume", -2).over(window))
-                    .otherwise(col("last_two_minutes_volume"))) \
-        .withColumn("last_three_minutes_price",
-                    when(col("row_number") == 1, lag("price", -3).over(window))
-                    .otherwise(col("last_three_minutes_price"))) \
-        .withColumn("last_three_minutes_volume",
-                    when(col("row_number") == 1, lag("volume", -3).over(window))
-                    .otherwise(col("last_three_minutes_volume"))) \
-        .withColumn("last_four_minutes_price",
-                    when(col("row_number") == 1, lag("price", -4).over(window))
-                    .otherwise(col("last_four_minutes_price"))) \
-        .withColumn("last_four_minutes_volume",
-                    when(col("row_number") == 1, lag("volume", -4).over(window))
-                    .otherwise(col("last_four_minutes_volume"))) \
-        .withColumn("last_five_minutes_price",
-                    when(col("row_number") == 1, lag("price", -5).over(window))
-                    .otherwise(col("last_five_minutes_price"))) \
-        .withColumn("last_five_minutes_volume",
-                    when(col("row_number") == 1, lag("volume", -5).over(window))
-                    .otherwise(col("last_five_minutes_volume"))) \
-        .orderBy("ticker", "trading_time")
-
-    prediction_df = prediction_df.withColumn("hour", hour(col("trading_time"))) \
-        .withColumn("minute", minute(col("trading_time")))
-
-    time.sleep(1)
-
-    print("Schema of new prediction data frame:")
-
-    prediction_df.printSchema()
-
-    # Create StringIndexer for column 'ticker'
-    string_indexer = StringIndexer(inputCol="ticker", outputCol="ticker_index")
-
-    prediction_df1 = string_indexer.fit(prediction_df1).transform(prediction_df1)
-
-    onehot_encoder = OneHotEncoder(inputCols=["ticker_index"], outputCols=["ticker_encoded"])
-
-    prediction_df1 = onehot_encoder.fit(prediction_df1).transform(prediction_df1)
-
-    prediction_df2 = prediction_df1.select("hour", "minute", "price", "ticker_encoded", "volume",
-                                           "last_one_minute_price", "last_one_minute_volume",
-                                           "last_two_minutes_price", "last_two_minutes_volume",
-                                           "last_three_minutes_price", "last_three_minutes_volume",
-                                           "last_four_minutes_price", "last_four_minutes_volume",
-                                           "last_five_minutes_price", "last_five_minutes_volume") \
-        .orderBy(desc("trading_time")) \
-        .limit(1)
-
-    time.sleep(1)
-
-    print("Schema of new prediction data frame:")
-
-    prediction_df2.printSchema()
-
-    prediction_df3 = one_minute_model.transform(prediction_df2)
-
-    prediction_df4 = five_minutes_model.transform(prediction_df2)
-
-    prediction_df3 = prediction_df3.withColumnRenamed("prediction", "next_one_minute_price")
-
-    prediction_df4 = prediction_df4.withColumnRenamed("prediction", "next_five_minutes_price")
-
-    prediction_df5 = prediction_df3.join(prediction_df4, on=[
-        prediction_df3.col("trading_time") == prediction_df4.col("trading_time"),
-        prediction_df3.col("ticker") == prediction_df4.col("ticker")
-    ], how="inner")
-
-    prediction_df6 = prediction_df5.select("trading_time", "price", "ticker", "volume",
-                                           "last_one_minute_price", "last_one_minute_volume",
-                                           "last_two_minutes_price", "last_two_minutes_volume",
-                                           "last_three_minutes_price", "last_three_minutes_volume",
-                                           "last_four_minutes_price", "last_four_minutes_volume",
-                                           "last_five_minutes_price", "last_five_minutes_volume",
-                                           "next_one_minute_price", "next_five_minutes_price")
-
-    time.sleep(1)
-
-    print("Schema of final prediction data frame:")
-
-    prediction_df6.printSchema()
+    prediction_df1 = analyze_trends(prediction_df)
 
     real_time_table = real_time_stock_df.writeStream \
         .trigger(processingTime="3 seconds") \
@@ -304,13 +230,15 @@ def run_spark_job():
         .start()
 
     aggregation_table = aggregation_df1.writeStream \
-        .foreachBatch(write_to_aggregation_table) \
+        .trigger(processingTime="3 seconds") \
         .outputMode("update") \
+        .foreachBatch(write_to_aggregation_table) \
         .start()
 
-    trend_analysis_table = prediction_df6.writeStream \
-        .foreachBatch(write_to_trend_analysis_table) \
+    trend_analysis_table = prediction_df1.writeStream \
+        .trigger(processingTime="3 seconds") \
         .outputMode("update") \
+        .foreachBatch(write_to_trend_analysis_table) \
         .start()
 
     real_time_table.awaitTermination()
