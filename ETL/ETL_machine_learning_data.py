@@ -24,39 +24,42 @@ session = cluster.connect()
 
 session.set_keyspace("vietnam_stock")
 
-ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN30', page=1, pageSize=100)
+ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
+
+ticker_df = ticker_df.rename(columns={'StockSymbol': 'ticker'})
 
 today = datetime.date.today()
 
 start_date = today - datetime.timedelta(days=90)
 
-def insert_vn_30_list():
-    print("Starting to get the list of VN30")
+
+def insert_ticker_list():
+    print("Starting to get the ticker list...")
 
     session.execute("TRUNCATE TABLE stock_list;")
 
     insert_statement = session.prepare("INSERT INTO stock_list (ticker) VALUES (?)")
 
     try:
-        for row in ticker_df.itertuples(index=False):
-            values = tuple(row)  # Convert DataFrame row to tuple
+        for ticker in ticker_df.itertuples(index=False):
+            values = tuple(ticker)  # Convert DataFrame row to tuple
 
             session.execute(insert_statement, values)
 
-        print("Insert list of VN30 ticker successfully!")
+        print("Insert list of ticker successfully!")
 
     except Exception as e:
-        print(f"Error while inserting VN30 ticker list: {e}")
+        print(f"Error while inserting ticker list: {e}")
 
 
 def extract_machine_learning_data():
-    print("Starting to extract the stock data of VN30 ticker list since 01-03-2024 for machine learning purpose")
+    print("Starting to extract the stock data of ticker list in last 90 days for machine learning purpose")
 
     session.execute("TRUNCATE TABLE stock_data_for_ml;")
 
     session.execute("TRUNCATE TABLE stock_trend_analysis_data;")
 
-    for ticker in ticker_df['StockSymbol']:
+    for ticker in ticker_df['ticker']:
         intraday_data = vnstock_data.stock_historical_data(symbol=ticker,
                                                            start_date=str(start_date),
                                                            end_date=str(today),
@@ -95,7 +98,7 @@ def extract_machine_learning_data():
         # Iterate through DataFrame rows and insert values
         try:
             for row in ticker_data.itertuples(index=False):
-                values = tuple(row)  # Convert DataFrame row to tuple
+                values = tuple(row)  # Convert DataFrame row to tuple:
 
                 session.execute(insert_ml_statement, values)
 
@@ -106,13 +109,13 @@ def extract_machine_learning_data():
 
 
 def main():
-    insert_vn_30_list()
+    insert_ticker_list()
 
-    time.sleep(2)
+    time.sleep(1)
 
     extract_machine_learning_data()
 
-    time.sleep(2)
+    time.sleep(1)
 
     print("Extract successfully!")
 

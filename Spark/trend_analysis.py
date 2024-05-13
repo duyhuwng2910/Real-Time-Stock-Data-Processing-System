@@ -35,6 +35,40 @@ session.row_factory = pandas_factory
 
 session.default_fetch_size = 10000000
 
+# Return the data of all ticker in HOSE exchange
+ticker_df = session.execute("SELECT * FROM stock_list;")
+
+ticker_df = ticker_df._current_rows
+
+
+def read_cassandra_table(ticker_df):
+    stock_data = ps_pd.DataFrame(columns={
+        "trading_time": 'datetime',
+        "ticker": 'str',
+        "price": 'int',
+        "volume": 'int',
+        "next_five_minutes_price": 'int'
+    })
+
+    query_statement = session.prepare("SELECT * FROM stock_data_for_ml WHERE ticker = (?);")
+
+    try:
+        for ticker in ticker_df.itertuples(index=False):
+            values = tuple(ticker)  # Convert DataFrame row to tuple
+
+            dataset = session.execute(query_statement, values)
+
+            ps_df = dataset._current_rows
+
+            stock_data = ps_pd.concat([stock_data, ps_df])
+
+        print("Insert data for building model successfully!")
+
+        return stock_data
+
+    except Exception as e:
+        print(f"Error while inserting ticker list: {e}")
+
 
 def build_five_minutes_linear_regression_model(training_data):
     five_mins_lr = LinearRegression(featuresCol="features", labelCol="next_five_minutes_price")
@@ -73,11 +107,7 @@ def evaluate_five_minutes_linear_regression_model(five_mins_prediction):
 
 
 def main():
-    dataset = session.execute("""
-        SELECT * FROM stock_data_for_ml;
-    """)
-
-    ps_df = dataset._current_rows
+    ps_df = read_cassandra_table(ticker_df)
 
     ps_df['trading_date'] = ps_df['trading_time'].dt.date
 
@@ -138,4 +168,6 @@ def main():
 
 
 if __name__ == "__main__":
+    print("Started to build model for predicting stock price in next 5 minutes...")
+
     main()

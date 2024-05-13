@@ -5,3 +5,4 @@ intraday.csv
 stock_data.csv
 SSI/
 .idea/
+.venv/

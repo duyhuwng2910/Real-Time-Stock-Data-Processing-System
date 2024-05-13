@@ -10,6 +10,8 @@ ADD https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.
 
 COPY cassandra.yml /usr/local/etc/cassandra.yml
 
+COPY cassandra.yaml /etc/cassandra/cassandra.yaml
+
 RUN chmod a+r /usr/local/lib/jmx_prometheus_javaagent.jar
 
 RUN echo 'JVM_OPTS="$JVM_OPTS -javaagent:/usr/local/lib/jmx_prometheus_javaagent.jar=7070:/usr/local/etc/cassandra.yml"' >>  /etc/cassandra/cassandra-env.sh

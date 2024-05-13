@@ -2,6 +2,8 @@ import time
 import json
 import sys
 
+import pandas as pd
+
 from ssi_fc_data.fc_md_stream import MarketDataStream
 from ssi_fc_data.fc_md_client import MarketDataClient
 from ssi_fc_data import model
@@ -91,25 +93,27 @@ def main():
 
     ticker_df = ticker_df.rename(columns={"StockSymbol": "ticker"})
 
-    insert_ticker_list(ticker_df)
-
     # Uncomment if using dataset of VN30 or VN100
     ticker_list = ticker_df['ticker'].to_list()
 
     # Return the data of all ticker in HOSE exchange
+    # # For running in Windows
     # stock_df = pd.read_excel(
     #     'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',
     #     sheet_name='Stock')
     #
+    # # For running in Ubuntu
+    # stock_df = pd.read_excel(r'Excel files/vn_stock.xlsx', sheet_name='Stock')
+    #
     # hose_df = stock_df.loc[stock_df['exchange'] == 'HOSE']
     #
     # ticker_df = hose_df['ticker']
-    
-    # ticker_df.to_sql('stock_list', engine, if_exists='replace', index=False)
 
     # Uncomment if using dataset of HOSE tickers list
     # ticker_list = df.to_list()
-    
+
+    insert_ticker_list(ticker_df)
+
     ticker_string = 'B:' + ticker_list[0]
     
     for i in range(1, len(ticker_list), 1):

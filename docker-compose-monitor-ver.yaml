@@ -180,7 +180,7 @@ services:
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
       - HEAP_NEWSIZE=32M
       - MAX_HEAP_SIZE=512M
-      - CLIENT_TIMEOUT=20
+      - CLIENT_TIMEOUT=300
     restart: always
 
   cassandra-2:
@@ -204,7 +204,7 @@ services:
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
       - HEAP_NEWSIZE=32M
       - MAX_HEAP_SIZE=512M
-      - CLIENT_TIMEOUT=20
+      - CLIENT_TIMEOUT=300
     restart: always
 
   cassandra-3:
@@ -229,7 +229,7 @@ services:
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
       - HEAP_NEWSIZE=32M
       - MAX_HEAP_SIZE=512M
-      - CLIENT_TIMEOUT=20
+      - CLIENT_TIMEOUT=300
     restart: always
 
   # Cấu hình Grafana container
