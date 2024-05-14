@@ -86,17 +86,17 @@ def main():
     # ticker = input("Please type the ticker you want to extract real time data:")
 
     # Return the data of ticker list in VN30
-    ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN30', page=1, pageSize=100)
+    # ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN30', page=1, pageSize=100)
         
     # Return the data of ticker list in VN100
-    # ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
+    ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
 
     ticker_df = ticker_df.rename(columns={"StockSymbol": "ticker"})
 
     # Uncomment if using dataset of VN30 or VN100
     ticker_list = ticker_df['ticker'].to_list()
 
-    # Return the data of all ticker in HOSE exchange
+    # # Return the data of all ticker in HOSE exchange
     # # For running in Windows
     # stock_df = pd.read_excel(
     #     'W:/study/UET/Graduation Thesis/Real-time-stock-data-processing-system/Excel files/vn_stock.xlsx',

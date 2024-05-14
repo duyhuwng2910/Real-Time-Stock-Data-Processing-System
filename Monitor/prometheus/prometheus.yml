@@ -16,8 +16,6 @@ scrape_configs:
     static_configs:
       - targets:
         - kafka-exporter:9308
-        - exporter-controller:5556
-        - exporter-broker:5556
 
   - job_name: "cassandra"
     scrape_interval: 5s

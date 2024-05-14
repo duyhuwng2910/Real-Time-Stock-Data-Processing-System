@@ -9,7 +9,6 @@ from pyspark.ml.regression import LinearRegressionModel
 
 kafka_topic_name = "stock"
 kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094"
-# kafka_bootstrap_servers = "localhost:29093,localhost:29094"
 
 # Create Spark Session
 spark_conn = SparkSession.builder \

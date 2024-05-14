@@ -4,6 +4,9 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
+from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler
+from pyspark.ml.regression import LinearRegressionModel
+
 kafka_topic_name = "stock"
 kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094"
 
@@ -16,10 +19,21 @@ spark_conn = SparkSession.builder \
 
 spark_conn.sparkContext.setLogLevel("ERROR")
 
-trend_analysis_df = spark_conn.read \
-    .format("org.apache.spark.sql.cassandra") \
-    .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
-    .load()
+# five_minutes_model = LinearRegressionModel.load("Model/fiveMinutesModel")
+#
+# ticker_df = spark_conn.read \
+#     .format("org.apache.spark.sql.cassandra") \
+#     .options(table="stock_list", keyspace="vietnam_stock") \
+#     .load()
+#
+# # Create StringIndexer for column 'ticker'
+# string_indexer = StringIndexer(inputCol="ticker", outputCol="ticker_index")
+#
+# ticker_df = string_indexer.fit(ticker_df).transform(ticker_df)
+#
+# onehot_encoder = OneHotEncoder(inputCols=["ticker_index"], outputCols=["ticker_encoded"])
+#
+# ticker_df = onehot_encoder.fit(ticker_df).transform(ticker_df)
 
 
 def process_real_time_stock_trading_data(json_df):
@@ -62,10 +76,7 @@ def process_real_time_stock_trading_data(json_df):
 def run_aggregation_task(aggregation_df):
     aggregation_df = aggregation_df \
         .withWatermark("trading_time", "5 minutes") \
-        .groupBy(
-             col("ticker"),
-             window("trading_time", "1 minute", "1 minute")
-             ) \
+        .groupBy(col("ticker"), window("trading_time", "1 minute", "1 minute")) \
         .agg(
             first("open").alias("open"),
             max("high").alias("high"),
@@ -86,6 +97,49 @@ def run_aggregation_task(aggregation_df):
     )
 
     return aggregation_df1
+
+
+def pre_processing_stock_data(aggregation_df1):
+    prediction_df = aggregation_df1.select("end_time", "ticker", "close", "volume")
+
+    prediction_df = prediction_df.withColumnRenamed("end_time", "trading_time") \
+        .withColumnRenamed("close", "price")
+
+    prediction_df = prediction_df.withColumn("hour", hour(col("trading_time"))) \
+        .withColumn("minute", minute(col("trading_time")))
+
+    time.sleep(1)
+
+    print("Schema of prediction data frame:")
+
+    prediction_df.printSchema()
+
+    return prediction_df
+
+
+# def analyze_trends(prediction_df):
+#     prediction_df = prediction_df.join(ticker_df, on=["ticker"], how="inner")
+#
+#     assembler = VectorAssembler(inputCols=['hour', 'minute', 'price', 'ticker_encoded', 'volume'], outputCol='features')
+#
+#     prediction_df1 = assembler.transform(prediction_df)
+#
+#     prediction_df2 = five_minutes_model.transform(prediction_df1)
+#
+#     prediction_df2 = prediction_df2.withColumnRenamed("prediction", "next_five_minutes_price")
+#
+#     prediction_df2 = prediction_df2.withColumn("next_five_minutes_price", round("next_five_minutes_price", -1))
+#
+#     prediction_df2 = prediction_df2.withColumn("next_five_minutes_price",
+#                                                prediction_df2.next_five_minutes_price.cast('int'))
+#
+#     print("Schema of final prediction data frame:")
+#
+#     prediction_df2.printSchema()
+#
+#     prediction_df3 = prediction_df2.select("trading_time", "ticker", "price", "volume", "next_five_minutes_price")
+#
+#     return prediction_df3
 
 
 def write_to_real_time_table(df, epoc_id):
@@ -111,20 +165,20 @@ def write_to_aggregation_table(df, epoc_id):
 
         print("Aggregate stock data successfully!")
     except Exception as e:
-        print(f"Error while aggregating to Cassandra:{e}")
+        print(f"Error while aggregating data to Cassandra table:{e}")
 
 
-def write_to_trend_analysis_table(df, epoc_id):
-    try:
-        df.write \
-            .format("org.apache.spark.sql.cassandra") \
-            .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
-            .mode("append") \
-            .save()
-
-        print("Analyze trend of stock price successfully!")
-    except Exception as e:
-        print(f"Error while analyzing to Cassandra:{e}")
+# def write_to_trend_analysis_table(df, epoc_id):
+#     try:
+#         df.write \
+#             .format("org.apache.spark.sql.cassandra") \
+#             .options(table="stock_trend_analysis_data", keyspace="vietnam_stock") \
+#             .mode("append") \
+#             .save()
+#
+#         print("Analyze trend of stock price successfully!")
+#     except Exception as e:
+#         print(f"Error while inserting analyzed data to Cassandra table:{e}")
 
 
 def run_spark_job():
@@ -133,7 +187,7 @@ def run_spark_job():
         .format("kafka") \
         .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
         .option("subscribe", kafka_topic_name) \
-        .option("startingOffsets", "earliest") \
+        .option("startingOffsets", "latest") \
         .load()
 
     print("Schema of the dataframe: ")
@@ -164,6 +218,10 @@ def run_spark_job():
 
     aggregation_df1 = run_aggregation_task(aggregation_df)
 
+    # prediction_df = pre_processing_stock_data(aggregation_df1)
+    #
+    # prediction_df1 = analyze_trends(prediction_df)
+
     real_time_table = real_time_stock_df.writeStream \
         .trigger(processingTime="3 seconds") \
         .outputMode("append") \
@@ -171,15 +229,22 @@ def run_spark_job():
         .start()
 
     aggregation_table = aggregation_df1.writeStream \
-        .foreachBatch(write_to_aggregation_table) \
+        .trigger(processingTime="3 seconds") \
         .outputMode("update") \
+        .foreachBatch(write_to_aggregation_table) \
         .start()
+
+    # trend_analysis_table = prediction_df1.writeStream \
+    #     .trigger(processingTime="3 seconds") \
+    #     .outputMode("update") \
+    #     .foreachBatch(write_to_trend_analysis_table) \
+    #     .start()
 
     real_time_table.awaitTermination()
 
     aggregation_table.awaitTermination()
 
-    print("Task completed!")
+    # trend_analysis_table.awaitTermination()
 
     spark_conn.stop()
 
