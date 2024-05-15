@@ -69,10 +69,6 @@ def insert_ticker_list(ticker_df):
 
 
 def main():
-    print("Starting extracting real time stock trading data...")
-
-    time.sleep(2)
-
     price_df = session.execute("""
         SELECT ticker, close as price, max(end_time) as end_time
         FROM aggregated_stock_trading_data
@@ -87,13 +83,15 @@ def main():
     ticker_df = ticker_df.rename(columns={"StockSymbol": "ticker"})
 
     # Uncomment if using dataset of HOSE tickers list
-    ticker_list = ticker_df.to_list()
+    ticker_list = ticker_df['ticker'].to_list()
 
     insert_ticker_list(ticker_df)
 
+    print("Starting extracting real time stock trading data...")
+
     start = 0
 
-    today = str(datetime.datetime.today())
+    today = str(datetime.date.today())
     hour = datetime.datetime.now().hour
     rtype = 'B'
 
@@ -101,7 +99,7 @@ def main():
                    100, 200, 300, 400, 500, 600, 700, 800, 900,
                    1000]
 
-    while start <= 1800:
+    while start <= 1000:
         minute = datetime.datetime.now().minute
         second = datetime.datetime.now().second
         trading_time = str(hour) + ":" + str(minute) + ":" + str(second)
@@ -109,9 +107,11 @@ def main():
         for i in range(1000):
             symbol = random.choice(ticker_list)
 
-            price = price_df['price'].loc[price_df['ticker'] == symbol]
+            price = price_df.loc[price_df['ticker'] == symbol, 'price'].iloc[0]
 
-            open_price = high = low = close = round(random.randint(price - 5000, price + 5000), -1)
+            open_price = round(random.randint(price - 3000, price + 3000), -1)
+
+            high = low = close = open_price
 
             volume = random.choice(volume_list)
 
@@ -129,8 +129,6 @@ def main():
             }
 
             producer.send("stock", value=data)
-
-        time.sleep(0.5)
 
         start += 1
 

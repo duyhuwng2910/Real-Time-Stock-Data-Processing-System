@@ -136,6 +136,8 @@ def analyze_trends(prediction_df):
     prediction_df2 = prediction_df2.withColumn("next_five_minutes_price",
                                                prediction_df2.next_five_minutes_price.cast('int'))
 
+    time.sleep(1)
+
     print("Schema of final prediction data frame:")
 
     prediction_df2.printSchema()
