@@ -17,6 +17,4 @@ if __name__ == "__main__":
         .options(table="stock_list", keyspace="vietnam_stock") \
         .load()
 
-    ticker_df = ticker_df.withColumn("ticker_encoded", try_)
-
     spark.stop()

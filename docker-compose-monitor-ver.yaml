@@ -28,9 +28,8 @@ services:
       - spark_master:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/dev/consumer_simulation.py:/opt/bitnami/spark/consumer_simulation.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
-      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
-      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
       - ./Model:/opt/bitnami/spark/Model
     restart: always
 
@@ -50,7 +49,7 @@ services:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_CORES=3
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
@@ -60,9 +59,8 @@ services:
       - spark_worker_1:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/dev/consumer_simulation.py:/opt/bitnami/spark/consumer_simulation.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
-      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
-      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
       - ./Model:/opt/bitnami/spark/Model
     deploy:
       resources:
@@ -87,7 +85,7 @@ services:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_CORES=3
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
@@ -97,9 +95,8 @@ services:
       - spark_worker_2:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/dev/consumer_simulation.py:/opt/bitnami/spark/consumer_simulation.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
-      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
-      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
       - ./Model:/opt/bitnami/spark/Model
     deploy:
       resources:
@@ -125,7 +122,7 @@ services:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_CORES=3
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
@@ -135,9 +132,8 @@ services:
       - spark_worker_3:/bitnami/spark
       - ./Spark/consumer.py:/opt/bitnami/spark/consumer.py
       - ./Spark/dev/consumer.py:/opt/bitnami/spark/consumer_dev.py
+      - ./Spark/dev/consumer_simulation.py:/opt/bitnami/spark/consumer_simulation.py
       - ./Spark/trend_analysis.py:/opt/bitnami/spark/trend_analysis.py
-      - ./Spark/dev/test_spark_docker.py:/opt/bitnami/spark/test.py
-      - ./Spark/dev/test.csv:/opt/bitnami/spark/test.csv
       - ./Model:/opt/bitnami/spark/Model
     deploy:
       resources:
@@ -145,20 +141,20 @@ services:
           memory: 1024M
     restart: always
 
-  # Cấu hình MySQL container
-  mysql:
-    image: mysql:8.0.36
-    container_name: mysql
-    networks:
-      - graduation-thesis
-    ports:
-      - '3306:3306'
-    volumes:
-      - mysql_data:/var/lib/mysql
-    command: --max_allowed_packet=268425456
-    environment:
-      - MYSQL_DATABASE=vietnam_stock
-      - MYSQL_ROOT_PASSWORD=root
+#  # Cấu hình MySQL container
+#  mysql:
+#    image: mysql:8.0.36
+#    container_name: mysql
+#    networks:
+#      - graduation-thesis
+#    ports:
+#      - '3306:3306'
+#    volumes:
+#      - mysql_data:/var/lib/mysql
+#    command: --max_allowed_packet=268425456
+#    environment:
+#      - MYSQL_DATABASE=vietnam_stock
+#      - MYSQL_ROOT_PASSWORD=root
 
   # Cấu hình cụm Cassandra
   cassandra-1:

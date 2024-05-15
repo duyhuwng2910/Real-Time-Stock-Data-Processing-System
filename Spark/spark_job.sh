@@ -12,6 +12,9 @@ spark-submit --packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.5.1,o
 # Cho mục đích kiểm thử
 spark-submit --packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.0 --master spark://spark-master:7077 consumer_dev.py
 
+# Cho mục đích chạy bộ dữ liệu giả lập
+spark-submit --packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.0 --master spark://spark-master:7077 consumer_simulation.py
+
 # Cho mục đích kiểm thử local
 spark-submit --packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.0 --master spark://spark-master:7077 Spark/dev/consumer.py
 
