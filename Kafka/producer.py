@@ -24,7 +24,7 @@ sys.path.append(r'/home/nguyenduyhung/graduation_thesis/Real-Time-Stock-Data-Pro
 
 import config
 
-bootstrap_servers = ['localhost:29093', 'localhost:29094']
+bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                          value_serializer=lambda x: json.dumps(x).encode('utf-8'))

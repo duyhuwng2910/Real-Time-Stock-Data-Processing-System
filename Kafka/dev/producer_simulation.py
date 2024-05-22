@@ -1,6 +1,5 @@
 import datetime
 import random
-import time
 import json
 import sys
 
@@ -12,8 +11,6 @@ from cassandra.cluster import Cluster
 
 import vnstock_data
 
-from ssi_fc_data.fc_md_client import MarketDataClient
-
 # Uncomment if you use Windows
 # sys.path.append(r'W:/Study/UET/Graduation Thesis/Real-time-stock-data-processing-system/SSI')
 
@@ -24,7 +21,7 @@ import config
 
 vnstock_client = client = vnstock_data.ssi.fc_md_client.MarketDataClient(config)
 
-bootstrap_servers = ['localhost:29093', 'localhost:29094']
+bootstrap_servers = ['localhost:29093', 'localhost:29094', 'localhost:29095']
 
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                          value_serializer=lambda x: json.dumps(x).encode('utf-8'))
@@ -68,46 +65,37 @@ def insert_ticker_list(ticker_df):
         print(f"Error while inserting ticker list: {e}")
 
 
-def main():
-    price_df = session.execute("""
-        SELECT ticker, close as price, max(end_time) as end_time
-        FROM aggregated_stock_trading_data
-        GROUP BY ticker;
-    """)
+price_df = pd.read_csv('stock_data.csv')
 
-    price_df = price_df._current_rows
+# Return the data of ticker list in VN100
+ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
 
-    # Return the data of ticker list in VN100
-    ticker_df = vnstock_data.ssi.get_index_component(client, config, index='VN100', page=1, pageSize=100)
+ticker_df = ticker_df.rename(columns={"StockSymbol": "ticker"})
 
-    ticker_df = ticker_df.rename(columns={"StockSymbol": "ticker"})
+# Uncomment if using dataset of HOSE tickers list
+ticker_list = ticker_df['ticker'].to_list()
 
-    # Uncomment if using dataset of HOSE tickers list
-    ticker_list = ticker_df['ticker'].to_list()
+insert_ticker_list(ticker_df)
 
-    insert_ticker_list(ticker_df)
+today = str(datetime.date.today())
+hour = datetime.datetime.now().hour
+rtype = 'B'
 
-    print("Starting extracting real time stock trading data...")
+volume_list = [10, 20, 30, 40, 50, 60, 70, 80, 90,
+               100, 200, 300, 400, 500, 600, 700, 800, 900,
+               1000]
 
-    start = 0
 
-    today = str(datetime.date.today())
-    hour = datetime.datetime.now().hour
-    rtype = 'B'
-
-    volume_list = [10, 20, 30, 40, 50, 60, 70, 80, 90,
-                   100, 200, 300, 400, 500, 600, 700, 800, 900,
-                   1000]
-
+def send_data_to_kafka(start, num):
     while start <= 1000:
         minute = datetime.datetime.now().minute
         second = datetime.datetime.now().second
         trading_time = str(hour) + ":" + str(minute) + ":" + str(second)
 
-        for i in range(1000):
+        for i in range(num):
             symbol = random.choice(ticker_list)
 
-            price = price_df.loc[price_df['ticker'] == symbol, 'price'].iloc[0]
+            price = price_df.loc[price_df['ticker'] == symbol, 'close'].iloc[0]
 
             open_price = round(random.randint(price - 3000, price + 3000), -1)
 
@@ -132,7 +120,9 @@ def main():
 
         start += 1
 
-    print("Done")
+
+def main():
+    send_data_to_kafka(0, 1000)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler
 from pyspark.ml.regression import LinearRegressionModel
 
 kafka_topic_name = "stock"
-kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094"
+kafka_bootstrap_servers = "kafka-broker-1:9093,kafka-broker-2:9094,kafka-broker-3:9095"
 
 # Create Spark Session
 spark_conn = SparkSession.builder \
