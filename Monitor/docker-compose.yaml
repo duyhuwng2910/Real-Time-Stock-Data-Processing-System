@@ -15,6 +15,7 @@ services:
     command:
       - "--kafka.server=kafka-broker-1:9093"
       - "--kafka.server=kafka-broker-2:9094"
+      - "--kafka.server=kafka-broker-3:9095"
     restart: always
 
   # Cấu hình Prometheus container

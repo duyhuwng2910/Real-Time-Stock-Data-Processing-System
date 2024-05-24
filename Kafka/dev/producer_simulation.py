@@ -87,7 +87,7 @@ volume_list = [10, 20, 30, 40, 50, 60, 70, 80, 90,
 
 
 def send_data_to_kafka(start, num):
-    while start <= 1000:
+    while start <= 500:
         minute = datetime.datetime.now().minute
         second = datetime.datetime.now().second
         trading_time = str(hour) + ":" + str(minute) + ":" + str(second)
@@ -122,7 +122,7 @@ def send_data_to_kafka(start, num):
 
 
 def main():
-    send_data_to_kafka(0, 1000)
+    send_data_to_kafka(0, 10000)
 
 
 if __name__ == "__main__":
