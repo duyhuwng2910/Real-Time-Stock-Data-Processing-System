@@ -71,6 +71,8 @@ def read_cassandra_table(ticker_df):
 
 
 def build_five_minutes_linear_regression_model(training_data):
+    print("Started to build model...")
+
     five_mins_lr = LinearRegression(featuresCol="features", labelCol="next_five_minutes_price")
 
     five_mins_model = five_mins_lr.fit(training_data)
@@ -79,6 +81,8 @@ def build_five_minutes_linear_regression_model(training_data):
 
 
 def five_minutes_prediction(five_mins_model, testing_data):
+    print("Started to predict...")
+
     five_mins_prediction = five_mins_model.transform(testing_data)
 
     return five_mins_prediction
@@ -88,6 +92,7 @@ def evaluate_five_minutes_linear_regression_model(five_mins_prediction):
     """
         Evaluate the model for predicting stock index in next one minute
     """
+    print("Started to evaluate the model..")
     five_mins_evaluator_r2 = RegressionEvaluator(labelCol="next_five_minutes_price", predictionCol="prediction",
                                                  metricName="r2")
 
@@ -162,6 +167,8 @@ def main():
         print(f"Error while saving five minutes model:{e}")
 
     five_mins_prediction.select("price", "next_five_minutes_price", "prediction").limit(10).show()
+
+    print("Job completed!")
 
     # Stop spark session
     spark.stop()

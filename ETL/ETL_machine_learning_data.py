@@ -57,8 +57,6 @@ def extract_machine_learning_data():
 
     session.execute("TRUNCATE TABLE stock_data_for_ml;")
 
-    session.execute("TRUNCATE TABLE stock_trend_analysis_data;")
-
     for ticker in ticker_df['ticker']:
         intraday_data = vnstock_data.stock_historical_data(symbol=ticker,
                                                            start_date=str(start_date),
